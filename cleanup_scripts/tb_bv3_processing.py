@@ -11,6 +11,8 @@ from datetime import datetime
 # - info seeking behavior
 # - visual cue ratings 
 
+participant_dir = sys.argv[1] #PT or HC
+
 # Parsing the Bv3 spreadsheet to obtain participant's information seeking behavior
 def parse_task_df(df):
     task_cols = ['Participant Public ID', 'Participant Private ID', 'Task Name', 'Spreadsheet', 'Experiment Version', 'Trial Number', 'Reaction Time', 'Response', 'delay', 'reward_prob']
@@ -48,7 +50,7 @@ def parse_feedback_df(df):
 
 # searching, concatenating, and cleaning up reward questionnaire files
 def cleanup_rwd_q(task_name='Reward Questionnaire'):
-    matching_files = search_csv_files("../data/raw_data", "Task Name", task_name)
+    matching_files = search_csv_files("../data/raw_data/"+participant_dir, "Task Name", task_name)
 
     # df with all unparsed task info across all participants
     rwd_df = concatenate_csv_files(matching_files)
@@ -64,7 +66,7 @@ def cleanup_rwd_q(task_name='Reward Questionnaire'):
     return rwd_df.sort_index()
 
 def gen_cleaned_task_data(task_name):
-    matching_files = search_csv_files("../data/raw_data", "Task Name", task_name)
+    matching_files = search_csv_files("../data/raw_data/"+participant_dir, "Task Name", task_name)
 
     # df with all unparsed task info across all participants
     task_df = concatenate_csv_files(matching_files)[:-1] #up until last row if last row is all NaN
@@ -119,7 +121,7 @@ def main():
     rwd_df = cleanup_rwd_q()
 
     # writing Bv3 relevant dataframes to csv files
-    task_df.to_csv('../data/cleaned_data/'+'Bv3-'+current_date+'-task_info-data_exp_129671.csv', index=True)
-    fb_df.to_csv('../data/cleaned_data/'+'Bv3-'+current_date+'-fb_info-data_exp_129671.csv', index=True)
-    rwd_df.to_csv('../data/cleaned_data/'+'Bv3-'+current_date+'-rwd_info-data_exp_129671.csv', index=True)
+    task_df.to_csv('../data/cleaned_data/'+participant_dir+'/Bv3-'+current_date+'-task_info-data_exp_129671.csv', index=True)
+    fb_df.to_csv('../data/cleaned_data/'+participant_dir+'/Bv3-'+current_date+'-fb_info-data_exp_129671.csv', index=True)
+    rwd_df.to_csv('../data/cleaned_data/'+participant_dir+'/Bv3-'+current_date+'-rwd_info-data_exp_129671.csv', index=True)
 main()
