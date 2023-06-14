@@ -121,7 +121,7 @@ def main():
     rwd_df = cleanup_rwd_q()
 
     # writing Bv3 relevant dataframes to csv files
-    task_df.to_csv('../data/cleaned_data/'+participant_dir+'/Bv3-'+current_date+'-task_info-data_exp_129671.csv', index=True)
-    fb_df.to_csv('../data/cleaned_data/'+participant_dir+'/Bv3-'+current_date+'-fb_info-data_exp_129671.csv', index=True)
-    rwd_df.to_csv('../data/cleaned_data/'+participant_dir+'/Bv3-'+current_date+'-rwd_info-data_exp_129671.csv', index=True)
+    task_df.to_csv('../data/cleaned_data/'+participant_dir+'/Bv3-task_info-data_exp_129671-'+current_date+'.csv', index=True)
+    fb_df.to_csv('../data/cleaned_data/'+participant_dir+'/Bv3-fb_info-data_exp_129671-'+current_date+'.csv', index=True)
+    rwd_df.to_csv('../data/cleaned_data/'+participant_dir+'/Bv3-rwd_info-data_exp_129671-'+current_date+'.csv', index=True)
 main()

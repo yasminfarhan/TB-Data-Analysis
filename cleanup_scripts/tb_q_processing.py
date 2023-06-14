@@ -99,8 +99,8 @@ def compute_scores(_q_df_mapped_dict, _q_map):
 
 # TO RUN: pass in the path to the experiment directory as downloaded to Gorilla as second arg in command line - e.g. python tb_q_processing.py path/to/dir/
 def main():
-    suffix = path_to_exp_dir.split('/')[-2] #sheet name, file suffix
     current_date = datetime.now().strftime("%Y_%m_%d") #for keeping track of when data files were generated
+    suffix = path_to_exp_dir.split('/')[-2]+'-'+current_date #sheet name, file suffix
     save_dir = '../data/cleaned_data/'+participant_dir+'/'
 
     # Read in questionnaire mapping dictionary
@@ -113,20 +113,20 @@ def main():
     df_all_items = pd.DataFrame()
 
     # Loop through each dataframe in the dictionary and write it to a sheet in the Excel file
-    with pd.ExcelWriter(save_dir+current_date+'-q_aggregated_'+suffix+'.xlsx', engine='openpyxl') as writer:
+    with pd.ExcelWriter(save_dir+'Q_aggregated-'+suffix+'.xlsx', engine='openpyxl') as writer:
         for sheet_name, df in q_dfs_aggr.items():
             df.to_excel(writer, sheet_name=sheet_name, index=False)
 
     # Write the mapped questionnaire items to an Excel file
-    with pd.ExcelWriter(save_dir+current_date+'-q_mapped_'+suffix+'.xlsx', engine='openpyxl') as writer:
+    with pd.ExcelWriter(save_dir+'Q_mapped-'+suffix+'.xlsx', engine='openpyxl') as writer:
         for sheet_name, df in q_dfs_mapped.items():
             df_all_items = pd.concat([df_all_items, df],axis=1)
             df = df.reset_index(drop=False)
             df.to_excel(writer, sheet_name=sheet_name, index=False)
 
     # Write all mapped questionnaire items to a single csv file
-    df_all_items.reset_index(drop=False).to_csv(save_dir+current_date+'-q_all_items_mapped_'+suffix+'.csv', index=False)
+    df_all_items.reset_index(drop=False).to_csv(save_dir+'Q_all_items_mapped-'+suffix+'.csv', index=False)
 
     # Write the computed questionnaire totals to a csv file
-    df_scores.to_csv(save_dir+current_date+'-q_scored_'+suffix+'.csv', index=False)
+    df_scores.to_csv(save_dir+'Q_scored-'+suffix+'.csv', index=False)
 main()
