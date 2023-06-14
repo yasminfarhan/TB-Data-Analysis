@@ -107,17 +107,17 @@ def main():
     df_scores = compute_scores(q_dfs_mapped, q_map)
 
     # Loop through each dataframe in the dictionary and write it to a sheet in the Excel file
-    with pd.ExcelWriter('q_aggregated_'+suffix+'.xlsx', engine='openpyxl') as writer:
+    with pd.ExcelWriter('../data/q_aggregated_'+suffix+'.xlsx', engine='openpyxl') as writer:
         for sheet_name, df in q_dfs_aggr.items():
             df.to_excel(writer, sheet_name=sheet_name, index=False)
 
     # Write the mapped questionnaire items to an Excel file
-    with pd.ExcelWriter('q_mapped_'+suffix+'.xlsx', engine='openpyxl') as writer:
+    with pd.ExcelWriter('../data/q_mapped_'+suffix+'.xlsx', engine='openpyxl') as writer:
         for sheet_name, df in q_dfs_mapped.items():
             df = df.reset_index(drop=False)
             df.to_excel(writer, sheet_name=sheet_name, index=False)
 
     # Write the computed questionnaire totals to an Excel file
-    with pd.ExcelWriter('q_scored_'+suffix+'.xlsx', engine='openpyxl') as writer:
+    with pd.ExcelWriter('../data/q_scored_'+suffix+'.xlsx', engine='openpyxl') as writer:
         df_scores.to_excel(writer, index=False)
 main()

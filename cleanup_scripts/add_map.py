@@ -1,5 +1,7 @@
 import pickle 
 
+# Run this file only if q_info_dict needs modifying - e.g. if a new questionnaire has been added
+
 q_info_dict = {
 
   "AUDIT" : {
