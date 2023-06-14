@@ -3,9 +3,11 @@ import pandas as pd
 import csv
 import pickle
 import sys
+from datetime import datetime
 
 path_to_exp_dir = sys.argv[1]
 incl_q = ["AUDIT", "BIS", "AES", "TEPS", "ASRS", "AQ", "OCI", "NCS", "STAI", "SDS", "LSAS", "EAT", "SSMS", "SPSRQ", "SHAPS"]
+excl_col = ['Q_EAT_Current Weight']
 # note - for SHAPS a higher score indicates higher anhedonia
 
 # reading raw questionnaire files (as downloaded from Gorilla in short form) and aggregating them into a dict
@@ -74,11 +76,10 @@ def compute_scores(_q_df_mapped_dict, _q_map):
                 ss_col_name = "Q_"+q+"_"+SS+"_SCORE"
 
                 if q == "LSAS" or (q == "EAT" and SS == "C"): #there is no _ between SS and number, unlike other questionnaires, e.g. LSAS_A1 vs LSAS_A_1
-                    ss_cols = [col for col in q_df.columns if SS in col.split('_')[-1]] 
-
+                    ss_cols = [col for col in q_df.columns if SS in col.split('_')[-1] and col not in excl_col] 
                 else:
                     # get dataframe consisting only of subscale columns
-                    ss_cols = [col for col in q_df.columns if SS in col.split('_')]
+                    ss_cols = [col for col in q_df.columns if SS in col.split('_') and col not in excl_col]
 
                 # extract a dataframe consisting of only the columns relevant to this subscale
                 ss_df = q_df.loc[:, ss_cols]
@@ -96,7 +97,8 @@ def compute_scores(_q_df_mapped_dict, _q_map):
 
 # TO RUN: pass in the path to the experiment directory as downloaded to Gorilla as second arg in command line - e.g. python tb_q_processing.py path/to/dir/
 def main():
-    suffix = path_to_exp_dir.split('/')[-2]+'_q' #sheet name, file suffix
+    suffix = path_to_exp_dir.split('/')[-2] #sheet name, file suffix
+    current_date = datetime.now().strftime("%Y_%m_%d") #for keeping track of when data files were generated
 
     # Read in questionnaire mapping dictionary
     with open('q_map.pkl', 'rb') as file:
@@ -105,19 +107,23 @@ def main():
     q_dfs_aggr = aggregate_questionnaires(path_to_exp_dir) # aggregate raw questionnaires
     q_dfs_mapped = gen_mapped_scores(q_dfs_aggr, q_map) 
     df_scores = compute_scores(q_dfs_mapped, q_map)
+    df_all_items = pd.DataFrame()
 
     # Loop through each dataframe in the dictionary and write it to a sheet in the Excel file
-    with pd.ExcelWriter('../data/q_aggregated_'+suffix+'.xlsx', engine='openpyxl') as writer:
+    with pd.ExcelWriter('../data/'+current_date+'-q_aggregated_'+suffix+'.xlsx', engine='openpyxl') as writer:
         for sheet_name, df in q_dfs_aggr.items():
             df.to_excel(writer, sheet_name=sheet_name, index=False)
 
     # Write the mapped questionnaire items to an Excel file
-    with pd.ExcelWriter('../data/q_mapped_'+suffix+'.xlsx', engine='openpyxl') as writer:
+    with pd.ExcelWriter('../data/'+current_date+'-q_mapped_'+suffix+'.xlsx', engine='openpyxl') as writer:
         for sheet_name, df in q_dfs_mapped.items():
+            df_all_items = pd.concat([df_all_items, df],axis=1)
             df = df.reset_index(drop=False)
             df.to_excel(writer, sheet_name=sheet_name, index=False)
 
-    # Write the computed questionnaire totals to an Excel file
-    with pd.ExcelWriter('../data/q_scored_'+suffix+'.xlsx', engine='openpyxl') as writer:
-        df_scores.to_excel(writer, index=False)
+    # Write all mapped questionnaire items to a single csv file
+    df_all_items.reset_index(drop=False).to_csv('../data/'+current_date+'-q_all_items_mapped_'+suffix+'.csv', index=False)
+
+    # Write the computed questionnaire totals to a csv file
+    df_scores.to_csv('../data/'+current_date+'-q_scored_'+suffix+'.csv', index=False)
 main()
