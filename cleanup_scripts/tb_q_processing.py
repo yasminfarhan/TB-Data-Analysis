@@ -110,20 +110,20 @@ def main():
     df_all_items = pd.DataFrame()
 
     # Loop through each dataframe in the dictionary and write it to a sheet in the Excel file
-    with pd.ExcelWriter('../data/'+current_date+'-q_aggregated_'+suffix+'.xlsx', engine='openpyxl') as writer:
+    with pd.ExcelWriter('../data/cleaned_data/'+current_date+'-q_aggregated_'+suffix+'.xlsx', engine='openpyxl') as writer:
         for sheet_name, df in q_dfs_aggr.items():
             df.to_excel(writer, sheet_name=sheet_name, index=False)
 
     # Write the mapped questionnaire items to an Excel file
-    with pd.ExcelWriter('../data/'+current_date+'-q_mapped_'+suffix+'.xlsx', engine='openpyxl') as writer:
+    with pd.ExcelWriter('../data/cleaned_data/'+current_date+'-q_mapped_'+suffix+'.xlsx', engine='openpyxl') as writer:
         for sheet_name, df in q_dfs_mapped.items():
             df_all_items = pd.concat([df_all_items, df],axis=1)
             df = df.reset_index(drop=False)
             df.to_excel(writer, sheet_name=sheet_name, index=False)
 
     # Write all mapped questionnaire items to a single csv file
-    df_all_items.reset_index(drop=False).to_csv('../data/'+current_date+'-q_all_items_mapped_'+suffix+'.csv', index=False)
+    df_all_items.reset_index(drop=False).to_csv('../data/cleaned_data/'+current_date+'-q_all_items_mapped_'+suffix+'.csv', index=False)
 
     # Write the computed questionnaire totals to a csv file
-    df_scores.to_csv('../data/'+current_date+'-q_scored_'+suffix+'.csv', index=False)
+    df_scores.to_csv('../data/cleaned_data/'+current_date+'-q_scored_'+suffix+'.csv', index=False)
 main()
