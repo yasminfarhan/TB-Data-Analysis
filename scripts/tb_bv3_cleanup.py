@@ -4,7 +4,7 @@ import csv
 import pickle
 import sys
 from datetime import datetime
-from utils import get_exp_no, search_csv_files, concatenate_csv_files
+from utils import get_exp_no, search_csv_files, concatenate_csv_files, gen_cleaned_task_data
 
 # Task Name: 'Bv3 - Information Seeking Task - Varying Probability/Delay'
 # Information we can get: 
@@ -64,24 +64,6 @@ def cleanup_rwd_q(search_dir, task_name='Reward Questionnaire'):
 
     return rwd_df.sort_index()
 
-def gen_cleaned_task_data(search_dir, task_name):
-    matching_files = search_csv_files(search_dir, "Task Name", task_name)
-
-    # df with all unparsed task info across all participants
-    task_df = concatenate_csv_files(matching_files)[:-1] #up until last row if last row is all NaN
-
-    all_id_df_task = pd.DataFrame() # a dataframe containing the task info for all participants
-    all_id_df_fb = pd.DataFrame() # a dataframe containing the feedback info for all participants
-
-    for _, group in task_df.groupby('Participant Private ID'):
-        df_task = parse_task_df(group) # NOTE : not all versions have same number of trials - some have practice trials
-        df_fb = parse_feedback_df(group) 
-
-        all_id_df_task = pd.concat([all_id_df_task, df_task], axis=0)
-        all_id_df_fb = pd.concat([all_id_df_fb, df_fb], axis=0)
-
-    return all_id_df_task.sort_index(), all_id_df_fb.sort_index()
-
 def main():
     participant_dir = sys.argv[1] #PT or HC - i.e. Patient or Healthy Control directories
     exp_no = get_exp_no("B", participant_dir) #experiment number in Gorilla - used for naming the output files
@@ -91,7 +73,8 @@ def main():
     save_dir = '../data/cleaned_data/'+participant_dir+'/'
     path_to_bv3_dir = '../data/raw_data/'+participant_dir+'/Bv3/'
 
-    task_df, fb_df = gen_cleaned_task_data(path_to_bv3_dir, "Bv3 - Information Seeking Task - Varying Probability/Delay")
+    task_df = gen_cleaned_task_data(parse_task_df, path_to_bv3_dir, "Bv3 - Information Seeking Task - Varying Probability/Delay")
+    fb_df = gen_cleaned_task_data(parse_feedback_df, path_to_bv3_dir, "Bv3 - Information Seeking Task - Varying Probability/Delay")
     rwd_df = cleanup_rwd_q(path_to_bv3_dir)
 
     # writing Bv3 relevant dataframes to csv files
