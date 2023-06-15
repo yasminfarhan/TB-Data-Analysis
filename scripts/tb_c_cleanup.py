@@ -4,7 +4,15 @@ from datetime import datetime
 from utils import get_exp_no, search_csv_files, concatenate_csv_files, gen_cleaned_task_data
 
 def parse_task_df(df):
-    pass
+    task_cols = ['Participant Public ID', 'Participant Private ID', 'Task Name', 'Experiment Version', 'Trial Number', 'Reaction Time', 'Correct']
+
+    # filter out unnecessary rows & select specific columns
+    participant_data = df.loc[(df['Screen Name'] == 'test_sample') & (df['display'] == 'trial'), task_cols]
+
+    # select specific columns
+    participant_data.set_index('Participant Private ID', inplace=True)
+
+    return participant_data
 
 def main():
     participant_dir = sys.argv[1] #PT or HC - i.e. Patient or Healthy Control directories
@@ -15,7 +23,7 @@ def main():
     save_dir = '../data/cleaned_data/'+participant_dir+'/'
     path_to_task_dir = '../data/raw_data/'+participant_dir+'/C/'
 
-    task_df = gen_cleaned_task_data(parse_task_df, path_to_task_dir, "")
+    task_df = gen_cleaned_task_data(parse_task_df, path_to_task_dir, "C - Delay Match to Sample")
 
     # writing C relevant dataframes to csv files
     task_df.to_csv(save_dir+'C-task_info-'+suffix+'.csv', index=True)

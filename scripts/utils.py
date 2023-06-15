@@ -52,13 +52,15 @@ def concatenate_csv_files(file_paths):
 # parsing and concatenating pd dataframes on the level of the participant
 def gen_cleaned_task_data(parse_df, search_dir, task_name): #parse_df is a func with an implementation unique to cleanup script passing it in
     matching_files = search_csv_files(search_dir, "Task Name", task_name)
-
-    # df with all unparsed task info across all participants
-    task_df = concatenate_csv_files(matching_files)[:-1] #up until last row if last row is all NaN
     all_id_df = pd.DataFrame() # a dataframe containing the task info for all participants
 
-    for _, group in task_df.groupby('Participant Private ID'):
-        parsed_df = parse_df(group)
-        all_id_df = pd.concat([all_id_df, parsed_df], axis=0)
+    if len(matching_files):
+        # df with all unparsed task info across all participants
+        task_df = concatenate_csv_files(matching_files)[:-1] #up until last row if last row is all NaN
 
+        for _, group in task_df.groupby('Participant Private ID'):
+            parsed_df = parse_df(group)
+            all_id_df = pd.concat([all_id_df, parsed_df], axis=0)
+    else:
+        print("No relevant task files were found.")
     return all_id_df.sort_index()
