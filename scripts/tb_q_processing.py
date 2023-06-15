@@ -5,9 +5,6 @@ import pickle
 import sys
 from datetime import datetime
 
-path_to_exp_dir = sys.argv[1]+'/'
-participant_dir = sys.argv[2] #PT or HC
-
 incl_q = ["AUDIT", "BIS", "AES", "TEPS", "ASRS", "AQ", "OCI", "NCS", "STAI", "SDS", "LSAS", "EAT", "SSMS", "SPSRQ", "SHAPS"]
 excl_col = ['Q_EAT_Current Weight']
 # note - for SHAPS a higher score indicates higher anhedonia
@@ -16,27 +13,29 @@ excl_col = ['Q_EAT_Current Weight']
 def aggregate_questionnaires(cwd):
     q_dfs = {}
 
-    for f in os.listdir(cwd):
-        if "questionnaire" in f:
-            with open(path_to_exp_dir+f, 'r') as q_file:
-                reader = csv.reader(q_file)
+    for root, dirs, files in os.walk(cwd):
+        for f in files:
+            if "questionnaire" in f:
+                file_path = os.path.join(root, f)
+                with open(file_path, 'r') as q_file:
+                    reader = csv.reader(q_file)
 
-                task_idx = next(reader).index("Task Name")
-                first_row = next(reader)
+                    task_idx = next(reader).index("Task Name")
+                    first_row = next(reader)
 
-                if len(first_row) > 1:
-                    task = first_row[task_idx]
-                    if any(item in task for item in incl_q):
-                        q_acronym = task.split(' ')[-1][1:-1].split('-')[0].lower()
-                        q_df = pd.read_csv(path_to_exp_dir+f)
-                        
-                        if(q_acronym == "oci"):
-                            q_acronym = "ocir"
+                    if len(first_row) > 1:
+                        task = first_row[task_idx]
+                        if any(item in task for item in incl_q):
+                            q_acronym = task.split(' ')[-1][1:-1].split('-')[0].lower()
+                            q_df = pd.read_csv(file_path)
+                            
+                            if(q_acronym == "oci"):
+                                q_acronym = "ocir"
 
-                        new_sheet_name = q_acronym.upper()
+                            new_sheet_name = q_acronym.upper()
 
-                        q_df.set_index('Participant Private ID', inplace=True)
-                        q_dfs[new_sheet_name] = q_df.iloc[:-1,:].sort_index() #add this questionnaire to dict of all questionnaires
+                            q_df.set_index('Participant Private ID', inplace=True)
+                            q_dfs[new_sheet_name] = q_df.iloc[:-1,:].sort_index() #add this questionnaire to dict of all questionnaires
 
     return q_dfs
 
@@ -99,15 +98,19 @@ def compute_scores(_q_df_mapped_dict, _q_map):
 
 # TO RUN: pass in the path to the experiment directory as downloaded to Gorilla as second arg in command line - e.g. python tb_q_processing.py path/to/dir/
 def main():
+    participant_dir = sys.argv[1] #PT or HC
+    exp_no = sys.argv[2] #experiment number in Gorilla - used for naming the output files
+
     current_date = datetime.now().strftime("%Y_%m_%d") #for keeping track of when data files were generated
-    suffix = path_to_exp_dir.split('/')[-2]+'-'+current_date #sheet name, file suffix
+    suffix = "data_exp-"+exp_no+'-'+current_date
     save_dir = '../data/cleaned_data/'+participant_dir+'/'
+    path_to_q_dir = '../data/raw_data/'+participant_dir+'/Questionnaires/'
 
     # Read in questionnaire mapping dictionary
     with open('q_map.pkl', 'rb') as file:
         q_map = pickle.load(file)  
 
-    q_dfs_aggr = aggregate_questionnaires(path_to_exp_dir) # aggregate raw questionnaires
+    q_dfs_aggr = aggregate_questionnaires(path_to_q_dir) # aggregate raw questionnaires
     q_dfs_mapped = gen_mapped_scores(q_dfs_aggr, q_map) 
     df_scores = compute_scores(q_dfs_mapped, q_map)
     df_all_items = pd.DataFrame()
