@@ -1,7 +1,4 @@
-import os
 import pandas as pd
-import csv
-import pickle
 import sys
 from datetime import datetime
 from utils import get_exp_no, search_csv_files, concatenate_csv_files, gen_cleaned_task_data
@@ -71,11 +68,11 @@ def main():
     current_date = datetime.now().strftime("%Y_%m_%d") #for keeping track of when data files were generated
     suffix = "data_exp_"+exp_no+'-'+current_date
     save_dir = '../data/cleaned_data/'+participant_dir+'/'
-    path_to_bv3_dir = '../data/raw_data/'+participant_dir+'/Bv3/'
+    path_to_task_dir = '../data/raw_data/'+participant_dir+'/Bv3/'
 
-    task_df = gen_cleaned_task_data(parse_task_df, path_to_bv3_dir, "Bv3 - Information Seeking Task - Varying Probability/Delay")
-    fb_df = gen_cleaned_task_data(parse_feedback_df, path_to_bv3_dir, "Bv3 - Information Seeking Task - Varying Probability/Delay")
-    rwd_df = cleanup_rwd_q(path_to_bv3_dir)
+    task_df = gen_cleaned_task_data(parse_task_df, path_to_task_dir, "Bv3 - Information Seeking Task - Varying Probability/Delay")
+    fb_df = gen_cleaned_task_data(parse_feedback_df, path_to_task_dir, "Bv3 - Information Seeking Task - Varying Probability/Delay")
+    rwd_df = cleanup_rwd_q(path_to_task_dir)
 
     # writing Bv3 relevant dataframes to csv files
     task_df.to_csv(save_dir+'Bv3-task_info-'+suffix+'.csv', index=True)
