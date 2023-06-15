@@ -102,7 +102,7 @@ def main():
     exp_no = sys.argv[2] #experiment number in Gorilla - used for naming the output files
 
     current_date = datetime.now().strftime("%Y_%m_%d") #for keeping track of when data files were generated
-    suffix = "data_exp-"+exp_no+'-'+current_date
+    suffix = "data_exp_"+exp_no+'-'+current_date
     save_dir = '../data/cleaned_data/'+participant_dir+'/'
     path_to_q_dir = '../data/raw_data/'+participant_dir+'/Questionnaires/'
 

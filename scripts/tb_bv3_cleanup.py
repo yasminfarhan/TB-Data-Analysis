@@ -49,8 +49,8 @@ def parse_feedback_df(df):
     return participant_data
 
 # searching, concatenating, and cleaning up reward questionnaire files
-def cleanup_rwd_q(task_name='Reward Questionnaire'):
-    matching_files = search_csv_files("../data/raw_data/"+participant_dir, "Task Name", task_name)
+def cleanup_rwd_q(search_dir, task_name='Reward Questionnaire'):
+    matching_files = search_csv_files(search_dir, "Task Name", task_name)
 
     # df with all unparsed task info across all participants
     rwd_df = concatenate_csv_files(matching_files)
@@ -65,8 +65,8 @@ def cleanup_rwd_q(task_name='Reward Questionnaire'):
 
     return rwd_df.sort_index()
 
-def gen_cleaned_task_data(task_name):
-    matching_files = search_csv_files("../data/raw_data/"+participant_dir, "Task Name", task_name)
+def gen_cleaned_task_data(search_dir, task_name):
+    matching_files = search_csv_files(search_dir, "Task Name", task_name)
 
     # df with all unparsed task info across all participants
     task_df = concatenate_csv_files(matching_files)[:-1] #up until last row if last row is all NaN
@@ -115,13 +115,19 @@ def concatenate_csv_files(file_paths):
     return concatenated_df    
 
 def main():
-    current_date = datetime.now().strftime("%Y_%m_%d") #for keeping track of when data files were generated
+    participant_dir = sys.argv[1] #PT or HC - i.e. Patient or Healthy Control directories
+    exp_no = sys.argv[2] #experiment number in Gorilla - used for naming the output files
 
-    task_df, fb_df = gen_cleaned_task_data("Bv3 - Information Seeking Task - Varying Probability/Delay")
-    rwd_df = cleanup_rwd_q()
+    current_date = datetime.now().strftime("%Y_%m_%d") #for keeping track of when data files were generated
+    suffix = "data_exp_"+exp_no+'-'+current_date
+    save_dir = '../data/cleaned_data/'+participant_dir+'/'
+    path_to_bv3_dir = '../data/raw_data/'+participant_dir+'/Bv3/'
+
+    task_df, fb_df = gen_cleaned_task_data(path_to_bv3_dir, "Bv3 - Information Seeking Task - Varying Probability/Delay")
+    rwd_df = cleanup_rwd_q(path_to_bv3_dir)
 
     # writing Bv3 relevant dataframes to csv files
-    task_df.to_csv('../data/cleaned_data/'+participant_dir+'/Bv3-task_info-data_exp_129671-'+current_date+'.csv', index=True)
-    fb_df.to_csv('../data/cleaned_data/'+participant_dir+'/Bv3-fb_info-data_exp_129671-'+current_date+'.csv', index=True)
-    rwd_df.to_csv('../data/cleaned_data/'+participant_dir+'/Bv3-rwd_info-data_exp_129671-'+current_date+'.csv', index=True)
+    task_df.to_csv(save_dir+'Bv3-task_info-'+suffix+'.csv', index=True)
+    fb_df.to_csv(save_dir+'Bv3-fb_info-'+suffix+'.csv', index=True)
+    rwd_df.to_csv(save_dir+'Bv3-rwd_info-'+suffix+'.csv', index=True)
 main()
