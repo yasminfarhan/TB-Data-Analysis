@@ -1,7 +1,7 @@
 import pandas as pd
 import sys
 from datetime import datetime
-from utils import get_exp_no, search_csv_files, concatenate_csv_files, gen_cleaned_task_data
+from utils import get_exp_no, gen_cleaned_task_data
 
 def parse_task_df(df):
     task_cols = ['Participant Public ID', 'Participant Private ID', 'Task Name', 'Experiment Version', 'Trial Number', 'Reaction Time', 'Correct']
