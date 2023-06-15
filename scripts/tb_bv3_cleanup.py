@@ -11,8 +11,6 @@ from datetime import datetime
 # - info seeking behavior
 # - visual cue ratings 
 
-participant_dir = sys.argv[1] #PT or HC
-
 # Parsing the Bv3 spreadsheet to obtain participant's information seeking behavior
 def parse_task_df(df):
     task_cols = ['Participant Public ID', 'Participant Private ID', 'Task Name', 'Spreadsheet', 'Experiment Version', 'Trial Number', 'Reaction Time', 'Response', 'delay', 'reward_prob']
