@@ -4,6 +4,7 @@ import csv
 import pickle
 import sys
 from datetime import datetime
+from utils import get_exp_no
 
 incl_q = ["AUDIT", "BIS", "AES", "TEPS", "ASRS", "AQ", "OCI", "NCS", "STAI", "SDS", "LSAS", "EAT", "SSMS", "SPSRQ", "SHAPS"]
 excl_col = ['Q_EAT_Current Weight']
@@ -99,7 +100,7 @@ def compute_scores(_q_df_mapped_dict, _q_map):
 # TO RUN: pass in the path to the experiment directory as downloaded to Gorilla as second arg in command line - e.g. python tb_q_processing.py path/to/dir/
 def main():
     participant_dir = sys.argv[1] #PT or HC - i.e. Patient or Healthy Control directories
-    exp_no = sys.argv[2] #experiment number in Gorilla - used for naming the output files
+    exp_no = get_exp_no("Q", participant_dir) #experiment number in Gorilla - used for naming the output files
 
     current_date = datetime.now().strftime("%Y_%m_%d") #for keeping track of when data files were generated
     suffix = "data_exp_"+exp_no+'-'+current_date

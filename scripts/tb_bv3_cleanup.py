@@ -4,6 +4,7 @@ import csv
 import pickle
 import sys
 from datetime import datetime
+from utils import get_exp_no
 
 # Task Name: 'Bv3 - Information Seeking Task - Varying Probability/Delay'
 # Information we can get: 
@@ -114,7 +115,7 @@ def concatenate_csv_files(file_paths):
 
 def main():
     participant_dir = sys.argv[1] #PT or HC - i.e. Patient or Healthy Control directories
-    exp_no = sys.argv[2] #experiment number in Gorilla - used for naming the output files
+    exp_no = get_exp_no("B", participant_dir) #experiment number in Gorilla - used for naming the output files
 
     current_date = datetime.now().strftime("%Y_%m_%d") #for keeping track of when data files were generated
     suffix = "data_exp_"+exp_no+'-'+current_date

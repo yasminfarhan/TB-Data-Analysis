@@ -101,7 +101,7 @@ def process_task_b(exp_no, dir, save=True):
 
     add_task_b_features(df_data, df_fb, df_rwd, ft_dict)
 
-    if save:
+    if save: # if we choose to save task B feature info in an independent file
        pd.DataFrame.from_dict(ft_dict, orient='index').to_csv(save_dir+'Bv3_FT_INFO-'+suffix+'.csv')
 
 def main():
