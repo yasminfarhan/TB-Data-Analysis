@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 from collections import defaultdict
+import sys 
+from datetime import datetime
 
 # a function to retrieve the number of times response == 'find out now' in the passed in dataframe under some delay and/or prob condition
 def get_info_seeking_count(df, delay=None, prob=None):
@@ -12,7 +14,7 @@ def get_info_seeking_count(df, delay=None, prob=None):
     return df[(df['Response'] == "find-out-now.png") & (df['reward_prob'] == prob)].shape[0]
 
 # function to add task b features to participant dictionary using data, feedback dataframes
-def add_task_b_features(data_df, fb_df, rwd_df, p_dict, is_pt=True):
+def add_task_b_features(data_df, fb_df, rwd_df, p_dict):
     # get list of unique participant ids
     participant_ids = data_df.index.unique().tolist()
     
@@ -20,7 +22,7 @@ def add_task_b_features(data_df, fb_df, rwd_df, p_dict, is_pt=True):
     for id in participant_ids:
         print("\n", id)
         participant_fb_df = fb_df.loc[id] # this returns feedback info for this participant
-        participant_data_df = data_df.loc[id][-44:] # this returns a 25x6 df reflecting the 25 (or 44) trials and 6 columns (Trial.Number, Timed.Out, Reaction.Time, Response, delay, GotReward) for this participant id
+        participant_data_df = data_df.loc[id].tail(44) # this returns a 25x6 df reflecting the 25 (or 44) trials and 6 columns (Trial.Number, Timed.Out, Reaction.Time, Response, delay, GotReward) for this participant id
         participant_rwd_df = rwd_df.loc[id]
 
 ############## reward questionnaire data ##############
@@ -52,15 +54,12 @@ def add_task_b_features(data_df, fb_df, rwd_df, p_dict, is_pt=True):
             # Compute the proportion of rows where 'Response' is equal to "find-out-now.png" and 'Delay' is equal to cur delay, add to dict
             p_dict[id][ft_name] = get_info_seeking_count(participant_data_df, delay=dly)/(participant_data_df[participant_data_df['delay'] == dly].shape[0])
             
-            # print(ft_name, p_dict[id][ft_name])
-
         # PROP FON across prob conditions 
         for prb in probs:
             ft_name = "B_PROP_FON_CHOICE_{}p".format(str(prb).split(".")[1])
 
             # Compute the proportion of rows where 'Response' is equal to "find-out-now.png" and 'reward_prob' is equal to cur prb, add to dict
             p_dict[id][ft_name] = get_info_seeking_count(participant_data_df, prob=prb)/(participant_data_df[participant_data_df['reward_prob'] == prb].shape[0])
-            # print(ft_name, p_dict[id][ft_name])
 
         if(len(probs) > 1 and len(delays) > 1):
             for prob in probs:
@@ -90,11 +89,20 @@ def add_task_b_features(data_df, fb_df, rwd_df, p_dict, is_pt=True):
 
 
 def main():
+    participant_dir = sys.argv[1] #PT or HC - i.e. Patient or Healthy Control directories
+    exp_no = sys.argv[2] #experiment number in Gorilla - used for naming the output files
+
+    current_date = datetime.now().strftime("%Y_%m_%d") #this assumes the files we're reading from were generated today
+    suffix = "data_exp_"+exp_no+'-'+current_date
+    save_dir = '../data/cleaned_data/'+participant_dir+'/'
+
     ft_dict = defaultdict(defaultdict)
 
-    df_data = pd.read_csv("/Users/yasmin/Documents/root/TB-Data-Analysis/data/cleaned_data/PT/Bv3-task_info-data_exp_129671-2023_06_15.csv").set_index('Participant Public ID')
-    df_fb = pd.read_csv("/Users/yasmin/Documents/root/TB-Data-Analysis/data/cleaned_data/PT/Bv3-fb_info-data_exp_129671-2023_06_15.csv").set_index('Participant Public ID')
-    df_rwd = pd.read_csv("/Users/yasmin/Documents/root/TB-Data-Analysis/data/cleaned_data/PT/Bv3-rwd_info-data_exp_129671-2023_06_15.csv").set_index('Participant Public ID')
+    df_data = pd.read_csv(save_dir+'Bv3-task_info-'+suffix+'.csv').set_index('Participant Public ID')
+    df_fb = pd.read_csv(save_dir+'Bv3-fb_info-'+suffix+'.csv').set_index('Participant Public ID')
+    df_rwd = pd.read_csv(save_dir+'Bv3-rwd_info-'+suffix+'.csv').set_index('Participant Public ID')
 
     add_task_b_features(df_data, df_fb, df_rwd, ft_dict)
+
+    pd.DataFrame.from_dict(ft_dict, orient='index').to_csv(save_dir+'FT_INFO-'+suffix+'.csv')
 main()
