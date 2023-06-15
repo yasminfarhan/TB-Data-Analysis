@@ -3,6 +3,7 @@ import numpy as np
 from collections import defaultdict
 import sys 
 from datetime import datetime
+from utils import get_exp_no
 
 # a function to retrieve the number of times response == 'find out now' in the passed in dataframe under some delay and/or prob condition
 def get_info_seeking_count(df, delay=None, prob=None):
@@ -87,14 +88,10 @@ def add_task_b_features(data_df, fb_df, rwd_df, p_dict):
         # Multiply reward rating by info seeking behavior - used in mixed effects modeling
         p_dict[id]['B_RVxPROP_FON'] = p_dict[id]['B_POST_RWD_RATING']*p_dict[id]['B_PROP_FON']
 
-
-def main():
-    participant_dir = sys.argv[1] #PT or HC - i.e. Patient or Healthy Control directories
-    exp_no = sys.argv[2] #experiment number in Gorilla - used for naming the output files
-
+def process_task_b(exp_no, dir, save=True):
     current_date = datetime.now().strftime("%Y_%m_%d") #this assumes the files we're reading from were generated today
     suffix = "data_exp_"+exp_no+'-'+current_date
-    save_dir = '../data/cleaned_data/'+participant_dir+'/'
+    save_dir = '../data/cleaned_data/'+dir+'/'
 
     ft_dict = defaultdict(defaultdict)
 
@@ -104,5 +101,10 @@ def main():
 
     add_task_b_features(df_data, df_fb, df_rwd, ft_dict)
 
-    pd.DataFrame.from_dict(ft_dict, orient='index').to_csv(save_dir+'FT_INFO-'+suffix+'.csv')
+    if save:
+       pd.DataFrame.from_dict(ft_dict, orient='index').to_csv(save_dir+'Bv3_FT_INFO-'+suffix+'.csv')
+
+def main():
+    p_dir = sys.argv[1] #PT or HC - i.e. Patient or Healthy Control directories
+    ft_dict = process_task_b(get_exp_no("B", p_dir), p_dir)
 main()
