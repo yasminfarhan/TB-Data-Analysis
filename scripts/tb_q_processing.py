@@ -98,7 +98,7 @@ def compute_scores(_q_df_mapped_dict, _q_map):
 
 # TO RUN: pass in the path to the experiment directory as downloaded to Gorilla as second arg in command line - e.g. python tb_q_processing.py path/to/dir/
 def main():
-    participant_dir = sys.argv[1] #PT or HC
+    participant_dir = sys.argv[1] #PT or HC - i.e. Patient or Healthy Control directories
     exp_no = sys.argv[2] #experiment number in Gorilla - used for naming the output files
 
     current_date = datetime.now().strftime("%Y_%m_%d") #for keeping track of when data files were generated
