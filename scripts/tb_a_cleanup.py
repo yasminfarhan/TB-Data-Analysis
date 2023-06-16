@@ -1,7 +1,7 @@
 import pandas as pd
 import sys
 from datetime import datetime
-from utils import get_exp_no, search_csv_files, concatenate_csv_files, gen_cleaned_task_data
+from utils import get_exp_no, gen_cleaned_task_data
 
 def parse_task_df(df):
     task_a_cols = ['Participant Public ID', 'Participant Private ID', 'Task Name', 'Spreadsheet', 'Trial Number', 'Reaction Time', 'Response', 'deck_a_p', 'deck_b_p', 'deck_c_p']
@@ -36,11 +36,15 @@ def parse_task_df(df):
 
     return participant_data
 
-def parse_feedback_df():
-    # # filter out rows which have the feedback participants gave about how they're feeling & their probability estimate for each deck + confidence level
-    # participant_feedback = df.loc[df['Zone.Type'] == "response_rating_scale_likert",
-    #                                             ['Participant.Private.ID', 'Task.Name', 'Spreadsheet', 'Screen.Name', 'display', 'Trial.Number', 'Response']]
-    pass
+def parse_feedback_df(df):
+    fb_a_cols = ['Participant Public ID', 'Participant Private ID', 'Task Name', 'Spreadsheet', 'Screen Name', 'display', 'Trial Number', 'Reaction Time', 'Response']
+
+    # filter out rows which have the feedback participants gave about how they're feeling & their probability estimate for each deck + confidence level
+    participant_feedback = df.loc[df['Zone Type'] == "response_rating_scale_likert",
+                                                fb_a_cols]
+    participant_feedback.set_index('Participant Private ID', inplace=True)
+
+    return participant_feedback
 
 def main():
     participant_dir = sys.argv[1] #PT or HC - i.e. Patient or Healthy Control directories
@@ -52,9 +56,16 @@ def main():
     path_to_task_dir = '../data/raw_data/'+participant_dir+'/A/'
 
     task_df_av1 = gen_cleaned_task_data(parse_task_df, path_to_task_dir, 'Av1 - 3 Arm Bandit - NoWin/Loss')
+    fb_df_av1 = gen_cleaned_task_data(parse_feedback_df, path_to_task_dir, 'Av1 - 3 Arm Bandit - NoWin/Loss')
+
     task_df_av3 = gen_cleaned_task_data(parse_task_df, path_to_task_dir, 'Av3 - 3 Arm Bandit - Win/NoLoss')
+    fb_df_av3 = gen_cleaned_task_data(parse_feedback_df, path_to_task_dir, 'Av3 - 3 Arm Bandit - Win/NoLoss')
 
     # writing A relevant dataframes to csv files
     task_df_av1.to_csv(save_dir+'Av1-task_info-'+suffix+'.csv', index=True)
+    fb_df_av1.to_csv(save_dir+'Av1-fb_info-'+suffix+'.csv', index=True)
+
     task_df_av3.to_csv(save_dir+'Av3-task_info-'+suffix+'.csv', index=True)
+    fb_df_av3.to_csv(save_dir+'Av3-fb_info-'+suffix+'.csv', index=True)
+
 main()
