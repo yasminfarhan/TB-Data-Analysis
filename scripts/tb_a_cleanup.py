@@ -4,7 +4,7 @@ from datetime import datetime
 from utils import get_exp_no, gen_cleaned_task_data
 
 def parse_task_df(df):
-    task_a_cols = ['Participant Public ID', 'Participant Private ID', 'Task Name', 'Spreadsheet', 'Trial Number', 'Reaction Time', 'Response', 'deck_a_p', 'deck_b_p', 'deck_c_p']
+    task_a_cols = ['Participant Public ID', 'Participant Private ID', 'Task Name', 'Experiment Version', 'Spreadsheet', 'Trial Number', 'Reaction Time', 'Response', 'deck_a_p', 'deck_b_p', 'deck_c_p']
 
     # filter out rows which only have the win/lose outcome information per trial, then select that column
     outcome_column = df.loc[((df['Zone Type'] != "timelimit_screen") & (df['display'] == "trial")) 
@@ -37,7 +37,7 @@ def parse_task_df(df):
     return participant_data
 
 def parse_feedback_df(df):
-    fb_a_cols = ['Participant Public ID', 'Participant Private ID', 'Task Name', 'Spreadsheet', 'Screen Name', 'display', 'Trial Number', 'Reaction Time', 'Response']
+    fb_a_cols = ['Participant Public ID', 'Participant Private ID', 'Task Name', 'Experiment Version', 'Spreadsheet', 'Screen Name', 'display', 'Trial Number', 'Reaction Time', 'Response']
 
     # filter out rows which have the feedback participants gave about how they're feeling & their probability estimate for each deck + confidence level
     participant_feedback = df.loc[df['Zone Type'] == "response_rating_scale_likert",
