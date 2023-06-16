@@ -34,7 +34,7 @@ def parse_task_df(df):
     participant_data = participant_data.rename(columns={'Spreadsheet': 'Probabilities', 'Task Name': 'Task Type'})
     participant_data.set_index('Participant Private ID', inplace=True)
 
-    return participant_data
+    return participant_data.sort_index()
 
 def parse_feedback_df(df):
     fb_a_cols = ['Participant Public ID', 'Participant Private ID', 'Task Name', 'Experiment Version', 'Spreadsheet', 'Screen Name', 'display', 'Trial Number', 'Reaction Time', 'Response']
@@ -44,7 +44,7 @@ def parse_feedback_df(df):
                                                 fb_a_cols]
     participant_feedback.set_index('Participant Private ID', inplace=True)
 
-    return participant_feedback
+    return participant_feedback.sort_index()
 
 def main():
     participant_dir = sys.argv[1] #PT or HC - i.e. Patient or Healthy Control directories

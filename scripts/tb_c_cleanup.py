@@ -12,7 +12,7 @@ def parse_task_df(df):
     # select specific columns
     participant_data.set_index('Participant Private ID', inplace=True)
 
-    return participant_data
+    return participant_data.sort_index()
 
 def main():
     participant_dir = sys.argv[1] #PT or HC - i.e. Patient or Healthy Control directories

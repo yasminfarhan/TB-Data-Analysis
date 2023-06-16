@@ -29,7 +29,7 @@ def parse_task_df(df):
     participant_data['GotReward'] = outcome_column
     participant_data.set_index('Participant Private ID', inplace=True)
 
-    return participant_data
+    return participant_data.sort_index()
 
 # Parsing the Bv3 spreadsheet to obtain participant's feeback following task
 def parse_feedback_df(df):
@@ -42,7 +42,7 @@ def parse_feedback_df(df):
     ].reset_index(drop=True).dropna()
     participant_data.set_index('Participant Private ID', inplace=True)
 
-    return participant_data
+    return participant_data.sort_index()
 
 # searching, concatenating, and cleaning up reward questionnaire files
 def cleanup_rwd_q(search_dir, task_name='Reward Questionnaire'):

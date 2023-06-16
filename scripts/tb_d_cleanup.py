@@ -3,7 +3,7 @@ import sys
 from datetime import datetime
 from utils import get_exp_no, gen_cleaned_task_data
 
-def parse_d1_df(df):
+def parse_d_df(df):
     task_cols = ['Participant Private ID', 'Participant Public ID', 'Spreadsheet', 'Task Name', 'Experiment Version', 'Trial Number', 'Timed Out', 'Reaction Time', 'Response', 'Correct', 'Answer']
 
     # filter out unnecessary rows then columns from this participant's data
@@ -17,6 +17,36 @@ def parse_d1_df(df):
 
     # renaming column
     participant_data = participant_data.rename(columns={'Answer': 'IsTarget', 'Spreadsheet': 'Level'})
+    participant_data = participant_data.sort_values(by=['Participant Private ID', 'Level'])
+
+    participant_data.set_index('Participant Private ID', inplace=True)
+
+    return participant_data
+
+def parse_d2_df(df):
+    task_cols = ['Participant Private ID', 'Participant Public ID', 'Spreadsheet', 'Task Name', 'Experiment Version', 'Trial Number', 'Reaction Time', 'Response', 'EasyAmount']
+
+    # filter out unnecessary rows then columns from this participant's data
+    participant_data = df.loc[df['Screen Name'] == "offer", task_cols]
+
+    participant_data.loc[participant_data['Spreadsheet'] == '1-vs-2-back', 'Spreadsheet'] = "2"
+    participant_data.loc[participant_data['Spreadsheet'] == '1-vs-3-back', 'Spreadsheet'] = "3"
+    participant_data.loc[participant_data['Spreadsheet'] == '1-vs-4-back', 'Spreadsheet'] = "4"
+    participant_data.loc[participant_data['Spreadsheet'] == '1-vs-5-back', 'Spreadsheet'] = "5"
+    participant_data.loc[participant_data['Spreadsheet'] == '1-vs-6-back', 'Spreadsheet'] = "6"
+
+    # simplifying data
+    participant_data.loc[participant_data['Response'] == '1-back-solid-fill.png', 'Response'] = 1
+    participant_data.loc[participant_data['Response'].isin(['2-back-solid-fill.png', 
+                                                    '3-back-solid-fill.png', 
+                                                    '4-back-solid-fill.png', 
+                                                    '5-back-solid-fill.png', 
+                                                    '6-back-solid-fill.png']), 'Response'] = 0
+
+    # renaming column
+    participant_data = participant_data.rename(columns={'Response': 'IsEasy', 'Spreadsheet': 'Level'})
+    participant_data = participant_data.sort_values(by=['Participant Private ID', 'Level'])
+
     participant_data.set_index('Participant Private ID', inplace=True)
 
     return participant_data
@@ -30,8 +60,12 @@ def main():
     save_dir = '../data/cleaned_data/'+participant_dir+'/'
     path_to_task_dir = '../data/raw_data/'+participant_dir+'/D/'
 
-    task_df = gen_cleaned_task_data(parse_d1_df, path_to_task_dir, "D1 - N-Back Experience")
+    d1_df = gen_cleaned_task_data(parse_d_df, path_to_task_dir, "D1 - N-Back Experience")
+    d2_df = gen_cleaned_task_data(parse_d2_df, path_to_task_dir, "D2 - Effort Discounting - Trials")
+    d3_df = gen_cleaned_task_data(parse_d_df, path_to_task_dir, "D3 - N-Back Task (1-back or 3-back)")
 
     # writing D relevant dataframes to csv files
-    task_df.to_csv(save_dir+'D1-task_info-'+suffix+'.csv', index=True)
+    d1_df.to_csv(save_dir+'D1-task_info-'+suffix+'.csv', index=True)
+    d2_df.to_csv(save_dir+'D2-task_info-'+suffix+'.csv', index=True)
+    d3_df.to_csv(save_dir+'D3-task_info-'+suffix+'.csv', index=True)
 main()
