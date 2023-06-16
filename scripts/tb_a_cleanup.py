@@ -4,20 +4,19 @@ from datetime import datetime
 from utils import get_exp_no, search_csv_files, concatenate_csv_files, gen_cleaned_task_data
 
 def parse_task_df(df):
+    task_a_cols = ['Participant Public ID', 'Participant Private ID', 'Task Name', 'Spreadsheet', 'Trial Number', 'Reaction Time', 'Response', 'deck_a_p', 'deck_b_p', 'deck_c_p']
+
     # filter out rows which only have the win/lose outcome information per trial, then select that column
     outcome_column = df.loc[((df['Zone Type'] != "timelimit_screen") & (df['display'] == "trial")) 
                                         & ((df['Screen Name'] == "win") | (df['Screen Name'] == "lose")) , 'Screen Name']
 
-    # # filter out rows which have the feedback participants gave about how they're feeling & their probability estimate for each deck + confidence level
-    # participant_feedback = df.loc[df['Zone.Type'] == "response_rating_scale_likert",
-    #                                             ['Participant.Private.ID', 'Task.Name', 'Spreadsheet', 'Screen.Name', 'display', 'Trial.Number', 'Response']]
-
-    # renaming the outcome column Outcome
-    outcome_column = outcome_column.rename('Outcome')
-
     # now that we have outcome information, filter out unnecessary rows then columns from this participant's data
-    participant_data = df.loc[(df['Screen Name'] == "offer") & (df['display'] == "trial"),
-                                            ['Participant Public ID', 'Participant Private ID', 'Task Name', 'Spreadsheet', 'Trial Number', 'Timed Out', 'Reaction Time', 'Response', 'deck_a_p', 'deck_b_p', 'deck_c_p']]
+    participant_data = df.loc[(df['Screen Name'] == "offer") & (df['display'] == "trial"), task_a_cols]
+
+    # adding outcome column to participant df - reset index first so it is added correctly
+    outcome_column = outcome_column.reset_index(drop=True)
+    participant_data = participant_data.reset_index(drop=True)
+    participant_data['Outcome'] = outcome_column
 
     # replacing Deck image name with A,B,C for simpler interpretation
     participant_data.loc[participant_data['Response'] == 'Deck A.png', 'Response'] = 'A'
@@ -36,6 +35,12 @@ def parse_task_df(df):
     participant_data.set_index('Participant Private ID', inplace=True)
 
     return participant_data
+
+def parse_feedback_df():
+    # # filter out rows which have the feedback participants gave about how they're feeling & their probability estimate for each deck + confidence level
+    # participant_feedback = df.loc[df['Zone.Type'] == "response_rating_scale_likert",
+    #                                             ['Participant.Private.ID', 'Task.Name', 'Spreadsheet', 'Screen.Name', 'display', 'Trial.Number', 'Response']]
+    pass
 
 def main():
     participant_dir = sys.argv[1] #PT or HC - i.e. Patient or Healthy Control directories
