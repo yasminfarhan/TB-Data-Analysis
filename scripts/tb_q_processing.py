@@ -1,10 +1,9 @@
 import os
 import pandas as pd
 import csv
-import pickle
 import sys
 from datetime import datetime
-from utils import get_exp_no
+from utils import get_exp_no, q_map
 
 incl_q = ["AUDIT", "BIS", "AES", "TEPS", "ASRS", "AQ", "OCI", "NCS", "STAI", "SDS", "LSAS", "EAT", "SSMS", "SPSRQ", "SHAPS"]
 excl_col = ['Q_EAT_Current Weight']
@@ -98,7 +97,7 @@ def compute_scores(_q_df_mapped_dict, _q_map):
 
 
 # TO RUN: pass in the path to the experiment directory as downloaded to Gorilla as second arg in command line - e.g. python tb_q_processing.py path/to/dir/
-def main():
+if __name__ == "__main__":
     participant_dir = sys.argv[1] #PT or HC - i.e. Patient or Healthy Control directories
     exp_no = get_exp_no("Q", participant_dir) #experiment number in Gorilla - used for naming the output files
 
@@ -106,10 +105,6 @@ def main():
     suffix = "data_exp_"+exp_no+'-'+current_date
     save_dir = '../data/cleaned_data/'+participant_dir+'/'
     path_to_q_dir = '../data/raw_data/'+participant_dir+'/Questionnaires/'
-
-    # Read in questionnaire mapping dictionary
-    with open('q_map.pkl', 'rb') as file:
-        q_map = pickle.load(file)  
 
     q_dfs_aggr = aggregate_questionnaires(path_to_q_dir) # aggregate raw questionnaires
     q_dfs_mapped = gen_mapped_scores(q_dfs_aggr, q_map) 
@@ -133,4 +128,3 @@ def main():
 
     # Write the computed questionnaire totals to a csv file
     df_scores.to_csv(save_dir+'Q_scored-'+suffix+'.csv', index=False)
-main()

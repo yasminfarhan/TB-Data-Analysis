@@ -1,7 +1,8 @@
 import pandas as pd
 import sys
 from datetime import datetime
-from utils import get_exp_no, gen_cleaned_task_data
+from utils import get_exp_no, gen_cleaned_task_data, q_map
+from tb_q_processing import gen_mapped_scores, compute_scores
 
 def parse_d_df(df):
     task_cols = ['Participant Private ID', 'Participant Public ID', 'Spreadsheet', 'Task Name', 'Experiment Version', 'Trial Number', 'Timed Out', 'Reaction Time', 'Response', 'Correct', 'Answer']
@@ -51,6 +52,29 @@ def parse_d2_df(df):
 
     return participant_data
 
+def parse_ntlx(df):
+    # don't change anything - we're going to make use of the imported gen_mapped_scores, compute_scores for processing 
+    df.set_index('Participant Private ID', inplace=True)
+
+    return df
+
+def gen_ntlx(df):
+    scores = compute_scores(gen_mapped_scores({"NTLX": df}, q_map), q_map)
+    dfs = []
+    cols = ['NTLX_1', 'NTLX_2', 'NTLX_3', 'NTLX_4', 'NTLX_5', 'NTLX_6']
+
+    # reformatting NTLX df so that there is only a single row per participant, and total NTLX scores as cols
+    for pvid, ntlx_scores in scores.groupby('Participant Private ID'):
+        ntlx_scores.set_index('Participant Private ID', inplace=True)
+        ntlx_scores = ntlx_scores.transpose()
+        ntlx_scores.columns = cols
+        ntlx_scores.index = [pvid]
+
+        dfs.append(ntlx_scores)
+    all_scores = pd.concat(dfs, axis=0)
+
+    return all_scores
+
 def main():
     participant_dir = sys.argv[1] #PT or HC - i.e. Patient or Healthy Control directories
     exp_no = get_exp_no("D", participant_dir) #experiment number in Gorilla - used for naming the output files
@@ -61,6 +85,7 @@ def main():
     path_to_task_dir = '../data/raw_data/'+participant_dir+'/D/'
 
     d1_df = gen_cleaned_task_data(parse_d_df, path_to_task_dir, "D1 - N-Back Experience")
+    d1_ntlx = gen_cleaned_task_data(parse_ntlx, path_to_task_dir, "NASA-TLX (NTLX)")
     d2_df = gen_cleaned_task_data(parse_d2_df, path_to_task_dir, "D2 - Effort Discounting - Trials")
     d3_df = gen_cleaned_task_data(parse_d_df, path_to_task_dir, "D3 - N-Back Task (1-back or 3-back)")
 
@@ -68,4 +93,6 @@ def main():
     d1_df.to_csv(save_dir+'D1-task_info-'+suffix+'.csv', index=True)
     d2_df.to_csv(save_dir+'D2-task_info-'+suffix+'.csv', index=True)
     d3_df.to_csv(save_dir+'D3-task_info-'+suffix+'.csv', index=True)
+    gen_ntlx(d1_ntlx).to_csv(save_dir+'D1-NTLX_info-'+suffix+'.csv', index=True)
+    
 main()
