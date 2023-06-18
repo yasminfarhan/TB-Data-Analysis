@@ -136,7 +136,7 @@ def add_task_b_features(data_df, fb_df, rwd_df, p_dict):
         if participant_fb_df is not None: #Bv2 doesn't have this information
             # CUE RATING - save rating for each of the three neutral cues (Apple, Ladder, Car) after having completed all trials
             for cue in ["A", "B", "C"]:
-                p_dict[id]["B_CUE_{}_RATING".format(cue)] = participant_fb_df[participant_fb_df['Screen Name'].str.contains("cue{}".format(cue))]['Response'][0]
+                p_dict[id]["B_CUE_{}_RATING".format(cue)] = participant_fb_df[participant_fb_df['Screen Name'].str.contains("cue{}".format(cue))]['Response'].values[0]
 
             # AVG CUE RATING - Compute the average rating given across the three neutral cues (Apple, Ladder, Car) after having completed all trials
             p_dict[id]["B_AVG_CUE_RATING"] = participant_fb_df[participant_fb_df['Screen Name'].str.contains("cue")]['Response'].astype(float).mean()    
