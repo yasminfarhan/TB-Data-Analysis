@@ -74,7 +74,6 @@ def add_task_b_features(data_df, fb_df, rwd_df, p_dict):
     
     # iterate through participant ids, getting the info we need per participant and adding to participant dict
     for id in participant_ids:
-        print("\n", id)
         participant_fb_df = fb_df.loc[id] # this returns feedback info for this participant
         participant_data_df = data_df.loc[id].tail(44) # this returns a 25x6 df reflecting the 25 (or 44) trials and 6 columns (Trial.Number, Timed.Out, Reaction.Time, Response, delay, GotReward) for this participant id
         participant_rwd_df = rwd_df.loc[id]
@@ -145,23 +144,78 @@ def add_task_b_features(data_df, fb_df, rwd_df, p_dict):
         p_dict[id]['B_RVxPROP_FON'] = p_dict[id]['B_POST_RWD_RATING']*p_dict[id]['B_PROP_FON']
 
 def add_task_c_features(data_df, p_dict):
-  num_trials = 20
+    num_trials = 20
 
-  # get list of unique participant ids
-  participant_ids = data_df.index.unique().tolist()
+    # get list of unique participant ids
+    participant_ids = data_df.index.unique().tolist()
 
-  # iterate through participant ids, getting the info we need per participant and adding to participant dict
-  for id in participant_ids:
-    participant_data_df = data_df.loc[id] 
+    # iterate through participant ids, getting the info we need per participant and adding to participant dict
+    for id in participant_ids:
+        participant_data_df = data_df.loc[id] 
 
-    # Compute Average Reaction Time (ART), add to dict
-    p_dict[id]["C_ART"] = participant_data_df['Reaction Time'].astype(float).mean()
+        # Compute Average Reaction Time (ART), add to dict
+        p_dict[id]["C_ART"] = participant_data_df['Reaction Time'].astype(float).mean()
 
-    # C_ACC - Compute accuracy by counting number of rows where 'Correct' == 1
-    p_dict[id]["C_ACC"] = (participant_data_df[(participant_data_df['Correct'].astype(float) == 1)].shape[0])/num_trials
+        # C_ACC - Compute accuracy by counting number of rows where 'Correct' == 1
+        p_dict[id]["C_ACC"] = (participant_data_df[(participant_data_df['Correct'].astype(float) == 1)].shape[0])/num_trials
 
-def add_task_d_features():
-   pass
+# function to retrieve the 1st half of each N-Back run if long version for fair acc comparison w/participants who did the short version
+def get_short_nback(df, trials_per_run=64):
+    if(df.shape[0] == trials_per_run*2): #long v
+        # Retrieve the first half of the first run
+        first_section = df[:trials_per_run // 2]
+
+        # Retrieve the first half of the second run
+        second_section = df[trials_per_run:trials_per_run + trials_per_run // 2]
+
+        # Concatenate the two sections together
+        new_df = pd.concat([first_section, second_section])
+
+        # Reset the index of the new DataFrame
+        new_df = new_df.reset_index(drop=True)
+
+        return new_df
+    else: #short version, needs no modifications
+        return df
+
+def add_task_d_features(df_d1_data, df_d2_data, df_d3_data, p_dict):
+    # get list of unique participant ids
+    participant_ids = df_d1_data.index.unique().tolist()
+
+    # iterate through participant ids, getting the info we need per participant and adding to participant dict
+    for id in participant_ids:        
+        p_d1 = df_d1_data.loc[id]
+        p_d2 = df_d2_data.loc[id] 
+        p_d3 = df_d3_data.loc[id] 
+
+    ### D1 ###################
+        p_dict[id]["D1_NUM_TIMEOUTS"] = p_d1[p_d1['Timed Out'] == "1"].shape[0]
+
+        # generate D1_1B_TGT_ACC, D1_2B_TGT_ACC, D1_3B_TGT_ACC, D1_4B_TGT_ACC, D1_5B_TGT_ACC, D1_6B_TGT_ACC, add to participant dict
+        for i in range(1,7):
+            d1_lvl = get_short_nback(p_d1[p_d1['Level'].str.startswith(str(i)+'-Back')]) #we want to compare the short/long versions appropriately, so take only the 1st half of each of the 2 runs (64 tot)
+            d1_lvl_tot_tgt = d1_lvl[d1_lvl['IsTarget'].astype(float) == 1].shape[0]
+            d1_lvl_tot_nontgt = d1_lvl[d1_lvl['IsTarget'].astype(float) == 0].shape[0]
+
+            p_dict[id]["D1_"+str(i)+"B_TGT_ACC"] = d1_lvl[(d1_lvl['Correct'].astype(float) == 1) & (d1_lvl['IsTarget'].astype(float) == 1)].shape[0]/d1_lvl_tot_tgt
+            p_dict[id]["D1_"+str(i)+"B_NON_TGT_ACC"] = d1_lvl[(d1_lvl['Correct'].astype(float) == 1) & (d1_lvl['IsTarget'].astype(float) == 0)].shape[0]/d1_lvl_tot_nontgt
+
+    ### D2 ###################
+        # generate features per decision level (1v2, 1v3, etc) and add to participant dict
+        for i in range(2,7):
+            str_prefix = "D2_1V"+str(i) 
+
+            # retrieve the final easy choice ('IsEasy') and final easy amount ('EasyAmount') at trial 6
+            p_dict[id][str_prefix+"_ISEASY"] = p_d2[p_d2['Level'] == i]['IsEasy'].astype(float).iloc[5]
+            p_dict[id][str_prefix+"_EA"] = p_d2[p_d2['Level'] == i]['EasyAmount'].astype(float).iloc[5]
+
+            # average reaction time at this level
+            p_dict[id][str_prefix+"_ART"] = p_d2[p_d2['Level'] == i]['Reaction Time'].astype(float).mean()
+
+        ### D3 ################### - generate proportion of timeouts, target accuracy
+            p_dict[id]["D3_NUM_TIMEOUTS"] = p_d3[p_d3['Timed Out'] == "1"].shape[0]
+            p_dict[id]["D3_TGT_ACC"] = p_d3[(p_d3['Correct'].astype(float) == 1) & (p_d3['IsTarget'].astype(float) == 1)].shape[0]/p_d3[(p_d3['IsTarget'].astype(float) == 1)].shape[0]
+            p_dict[id]["D3_NON_TGT_ACC"] = p_d3[(p_d3['Correct'].astype(float) == 1) & (p_d3['IsTarget'].astype(float) == 0)].shape[0]/p_d3[(p_d3['IsTarget'].astype(float) == 0)].shape[0]
 
 ######## PROCESSING FUNCS
 def process_task_a(exp_no, dir, ft_dict):
@@ -180,7 +234,7 @@ def process_task_a(exp_no, dir, ft_dict):
     add_task_a_features(df_data_av1, df_fb_av1, ft_dict, "V1")
     add_task_a_features(df_data_av3, df_fb_av3, ft_dict, "V3")
 
-def process_task_b(exp_no, dir, ft_dict, save=True):
+def process_task_b(exp_no, dir, ft_dict):
     current_date = datetime.now().strftime("%Y_%m_%d") #this assumes the files we're reading from were generated today
     suffix = "data_exp_"+exp_no+'-'+current_date
     read_dir = '../data/cleaned_data/'+dir+'/'
@@ -191,7 +245,7 @@ def process_task_b(exp_no, dir, ft_dict, save=True):
 
     add_task_b_features(df_data, df_fb, df_rwd, ft_dict)
 
-def process_task_c(exp_no, dir, ft_dict, save=True):
+def process_task_c(exp_no, dir, ft_dict):
     current_date = datetime.now().strftime("%Y_%m_%d") #this assumes the files we're reading from were generated today
     suffix = "data_exp_"+exp_no+'-'+current_date
     read_dir = '../data/cleaned_data/'+dir+'/'
@@ -200,10 +254,16 @@ def process_task_c(exp_no, dir, ft_dict, save=True):
 
     add_task_c_features(df_data, ft_dict)
 
-def process_task_d(exp_no, dir, ft_dict, save=True):
+def process_task_d(exp_no, dir, ft_dict):
     current_date = datetime.now().strftime("%Y_%m_%d") #this assumes the files we're reading from were generated today
     suffix = "data_exp_"+exp_no+'-'+current_date
     read_dir = '../data/cleaned_data/'+dir+'/'
+
+    df_d1_data = pd.read_csv(read_dir+'D1-task_info-'+suffix+'.csv').set_index('Participant Public ID')
+    df_d2_data = pd.read_csv(read_dir+'D2-task_info-'+suffix+'.csv').set_index('Participant Public ID')
+    df_d3_data = pd.read_csv(read_dir+'D3-task_info-'+suffix+'.csv').set_index('Participant Public ID')
+
+    add_task_d_features(df_d1_data, df_d2_data, df_d3_data, ft_dict)
 
 #### MAIN
 def main():
@@ -215,7 +275,7 @@ def main():
     process_task_a(get_exp_no("A", p_dir), p_dir, ft_dict)
     process_task_b(get_exp_no("B", p_dir), p_dir, ft_dict)
     process_task_c(get_exp_no("C", p_dir), p_dir, ft_dict)
-    # process_task_d(get_exp_no("D", p_dir), p_dir, ft_dict)
+    process_task_d(get_exp_no("D", p_dir), p_dir, ft_dict)
 
     pd.DataFrame.from_dict(ft_dict, orient='index').to_csv(save_dir+'FT_INFO-'+current_date+'.csv')
 
