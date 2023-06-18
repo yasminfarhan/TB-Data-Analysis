@@ -82,7 +82,7 @@ def main():
     current_date = datetime.now().strftime("%Y_%m_%d") #for keeping track of when data files were generated
     suffix = "data_exp_"+exp_no+'-'+current_date
     save_dir = '../data/cleaned_data/'+participant_dir+'/'
-    path_to_task_dir = '../data/raw_data/'+participant_dir+'/D/'
+    path_to_task_dir = '../data/raw_data/'+participant_dir+'/'
 
     d1_df = gen_cleaned_task_data(parse_d_df, path_to_task_dir, "D1 - N-Back Experience")
     d1_ntlx = gen_cleaned_task_data(parse_ntlx, path_to_task_dir, "NASA-TLX (NTLX)")

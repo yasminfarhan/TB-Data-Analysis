@@ -105,7 +105,7 @@ if __name__ == "__main__":
     current_date = datetime.now().strftime("%Y_%m_%d") #for keeping track of when data files were generated
     suffix = "data_exp_"+exp_no+'-'+current_date
     save_dir = '../data/cleaned_data/'+participant_dir+'/'
-    path_to_q_dir = '../data/raw_data/'+participant_dir+'/Questionnaires/'
+    path_to_q_dir = '../data/raw_data/'+participant_dir+'/'
 
     q_dfs_aggr = aggregate_questionnaires(path_to_q_dir, participant_dir) # aggregate raw questionnaires
     q_dfs_mapped = gen_mapped_scores(q_dfs_aggr, q_map) 

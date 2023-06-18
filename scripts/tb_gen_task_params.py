@@ -223,7 +223,6 @@ def add_task_d_features(df_d1_data, df_d1_ntlx, df_d2_data, df_d3_data, p_dict):
 
     ### D3 ################### - generate proportion of timeouts, target accuracy
         p_dict[id]["D3_NUM_TIMEOUTS"] = p_d3[p_d3['Timed Out'] == 1].shape[0]
-        print(id, p_dict[id]["D3_NUM_TIMEOUTS"])
         p_dict[id]["D3_TGT_ACC"] = p_d3[(p_d3['Correct'].astype(float) == 1) & (p_d3['IsTarget'].astype(float) == 1)].shape[0]/p_d3[(p_d3['IsTarget'].astype(float) == 1)].shape[0]
         p_dict[id]["D3_NON_TGT_ACC"] = p_d3[(p_d3['Correct'].astype(float) == 1) & (p_d3['IsTarget'].astype(float) == 0)].shape[0]/p_d3[(p_d3['IsTarget'].astype(float) == 0)].shape[0]
 

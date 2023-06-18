@@ -68,7 +68,7 @@ def main():
     current_date = datetime.now().strftime("%Y_%m_%d") #for keeping track of when data files were generated
     suffix = "data_exp_"+exp_no+'-'+current_date
     save_dir = '../data/cleaned_data/'+participant_dir+'/'
-    path_to_task_dir = '../data/raw_data/'+participant_dir+'/Bv3/'
+    path_to_task_dir = '../data/raw_data/'+participant_dir+'/'
 
     task_df = gen_cleaned_task_data(parse_task_df, path_to_task_dir, "Bv3 - Information Seeking Task - Varying Probability/Delay")
     fb_df = gen_cleaned_task_data(parse_feedback_df, path_to_task_dir, "Bv3 - Information Seeking Task - Varying Probability/Delay")
