@@ -2,7 +2,7 @@ import pandas as pd
 from collections import defaultdict
 import sys 
 from datetime import datetime
-from utils import get_exp_no
+from utils import get_exp_no, id_cols
 
 bv = sys.argv[2] #version of task B, info seeking task (2 or 3)
 
@@ -21,8 +21,9 @@ def add_task_a_features(data_df, fb_df, p_dict, version):
 
     # iterate through participant ids, getting the info we need per participant and adding to participant dict
     for id in participant_ids:
-            participant_data_df = data_df.loc[id] # this returns a num_trialsx10 df 
-            participant_fb_df = fb_df.loc[id] # this returns feedback info for this participant
+            # reset index so that acc indexing is correct
+            participant_data_df = data_df.loc[id].reset_index() # this returns a num_trialsx10 df 
+            participant_fb_df = fb_df.loc[id].reset_index() # this returns feedback info for this participant
 
             ###### task data ######
             # get accuracy for this participant - i.e. the number of times within the 99 trials that this participant chose the deck with highest probability of reward/no loss
@@ -236,12 +237,12 @@ def process_task_a(exp_no, dir, ft_dict):
     read_dir = '../data/cleaned_data/'+dir+'/'
     
     # Av1
-    df_data_av1 = pd.read_csv(read_dir+'Av1-task_info-'+suffix+'.csv').set_index('Participant Public ID')
-    df_fb_av1 = pd.read_csv(read_dir+'Av1-fb_info-'+suffix+'.csv').set_index('Participant Public ID')
+    df_data_av1 = pd.read_csv(read_dir+'Av1-task_info-'+suffix+'.csv').set_index(id_cols)
+    df_fb_av1 = pd.read_csv(read_dir+'Av1-fb_info-'+suffix+'.csv').set_index(id_cols)
 
     # Av3
-    df_data_av3 = pd.read_csv(read_dir+'Av3-task_info-'+suffix+'.csv').set_index('Participant Public ID')
-    df_fb_av3 = pd.read_csv(read_dir+'Av3-fb_info-'+suffix+'.csv').set_index('Participant Public ID')
+    df_data_av3 = pd.read_csv(read_dir+'Av3-task_info-'+suffix+'.csv').set_index(id_cols)
+    df_fb_av3 = pd.read_csv(read_dir+'Av3-fb_info-'+suffix+'.csv').set_index(id_cols)
 
     add_task_a_features(df_data_av1, df_fb_av1, ft_dict, "V1")
     add_task_a_features(df_data_av3, df_fb_av3, ft_dict, "V3")
@@ -251,13 +252,13 @@ def process_task_b(exp_no, dir, ft_dict):
     suffix = "data_exp_"+exp_no+'-'+current_date
     read_dir = '../data/cleaned_data/'+dir+'/'
 
-    df_data = pd.read_csv('{}Bv{}-task_info-{}.csv'.format(read_dir, bv, suffix)).set_index('Participant Public ID')
-    df_rwd = pd.read_csv('{}Bv{}-rwd_info-{}.csv'.format(read_dir, bv, suffix)).set_index('Participant Public ID')
+    df_data = pd.read_csv('{}Bv{}-task_info-{}.csv'.format(read_dir, bv, suffix)).set_index(id_cols)
+    df_rwd = pd.read_csv('{}Bv{}-rwd_info-{}.csv'.format(read_dir, bv, suffix)).set_index(id_cols)
 
     if bv == "2":
         add_task_b_features(df_data, None, df_rwd, ft_dict)
     elif bv == "3":
-        df_fb = pd.read_csv(read_dir+'Bv3-fb_info-'+suffix+'.csv').set_index('Participant Public ID')
+        df_fb = pd.read_csv(read_dir+'Bv3-fb_info-'+suffix+'.csv').set_index(id_cols)
         add_task_b_features(df_data, df_fb, df_rwd, ft_dict)
 
 def process_task_c(exp_no, dir, ft_dict):
@@ -265,7 +266,7 @@ def process_task_c(exp_no, dir, ft_dict):
     suffix = "data_exp_"+exp_no+'-'+current_date
     read_dir = '../data/cleaned_data/'+dir+'/'
 
-    df_data = pd.read_csv(read_dir+'C-task_info-'+suffix+'.csv').set_index('Participant Public ID')
+    df_data = pd.read_csv(read_dir+'C-task_info-'+suffix+'.csv').set_index(id_cols)
 
     add_task_c_features(df_data, ft_dict)
 
@@ -274,10 +275,10 @@ def process_task_d(exp_no, dir, ft_dict):
     suffix = "data_exp_"+exp_no+'-'+current_date
     read_dir = '../data/cleaned_data/'+dir+'/'
 
-    df_d1_data = pd.read_csv(read_dir+'D1-task_info-'+suffix+'.csv').set_index('Participant Public ID')
-    df_d1_ntlx = pd.read_csv(read_dir+'D1-NTLX_info-'+suffix+'.csv').set_index('Participant Public ID')
-    df_d2_data = pd.read_csv(read_dir+'D2-task_info-'+suffix+'.csv').set_index('Participant Public ID')
-    df_d3_data = pd.read_csv(read_dir+'D3-task_info-'+suffix+'.csv').set_index('Participant Public ID')
+    df_d1_data = pd.read_csv(read_dir+'D1-task_info-'+suffix+'.csv').set_index(id_cols)
+    df_d1_ntlx = pd.read_csv(read_dir+'D1-NTLX_info-'+suffix+'.csv').set_index(id_cols)
+    df_d2_data = pd.read_csv(read_dir+'D2-task_info-'+suffix+'.csv').set_index(id_cols)
+    df_d3_data = pd.read_csv(read_dir+'D3-task_info-'+suffix+'.csv').set_index(id_cols)
 
     add_task_d_features(df_d1_data, df_d1_ntlx, df_d2_data, df_d3_data, ft_dict)
 
@@ -293,6 +294,9 @@ def main():
     process_task_c(get_exp_no("C", p_dir), p_dir, ft_dict)
     process_task_d(get_exp_no("D", p_dir), p_dir, ft_dict)
 
-    pd.DataFrame.from_dict(ft_dict, orient='index').to_csv(save_dir+'FT_INFO-'+current_date+'.csv')
+    # saving ft dict to dataframe and saving as csv
+    ft_df = pd.DataFrame.from_dict(ft_dict, orient='index')
+    ft_df.index = ft_df.index.rename(id_cols)
+    ft_df.to_csv(save_dir+'FT_INFO-'+current_date+'.csv')
 
 main()

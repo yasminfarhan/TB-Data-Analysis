@@ -2,6 +2,8 @@ import os
 import pandas as pd
 import csv
 
+id_cols = ['Participant Private ID', 'Participant Public ID']
+
 latest_exp_no_dict = {
     "PT": {"A": "122902",
            "B": "129671",

@@ -1,7 +1,7 @@
 import pandas as pd
 import sys
 from datetime import datetime
-from utils import get_exp_no, search_csv_files, concatenate_csv_files, gen_cleaned_task_data
+from utils import get_exp_no, search_csv_files, concatenate_csv_files, gen_cleaned_task_data, id_cols
 
 v = sys.argv[2] #What version of the Info Seeking Task (of 1,2,3)
 
@@ -23,7 +23,7 @@ def parse_task_df_v3(df):
     ].reset_index(drop=True)
 
     participant_data['GotReward'] = outcome_column
-    participant_data.set_index('Participant Public ID', inplace=True)
+    participant_data.set_index(id_cols, inplace=True)
 
     return participant_data.sort_index()
 
@@ -45,7 +45,7 @@ def parse_task_df_v2(df):
     ].reset_index(drop=True)
 
     participant_data['GotReward'] = outcome_column
-    participant_data.set_index('Participant Public ID', inplace=True)
+    participant_data.set_index(id_cols, inplace=True)
 
     return participant_data.sort_index()
 
@@ -58,7 +58,7 @@ def parse_feedback_df(df):
         (df['display'] == 'end'),
         fb_cols
     ].reset_index(drop=True).dropna()
-    participant_data.set_index('Participant Public ID', inplace=True)
+    participant_data.set_index(id_cols, inplace=True)
 
     return participant_data.sort_index()
 
@@ -75,7 +75,7 @@ def cleanup_rwd_q(search_dir, task_name='Reward Questionnaire'):
     rwd_df = rwd_df.loc[:,
         rwd_cols
     ].reset_index(drop=True).dropna()
-    rwd_df.set_index('Participant Public ID', inplace=True)
+    rwd_df.set_index(id_cols, inplace=True)
 
     return rwd_df.sort_index()
 

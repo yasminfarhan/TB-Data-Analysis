@@ -1,7 +1,7 @@
 import pandas as pd
 import sys
 from datetime import datetime
-from utils import get_exp_no, gen_cleaned_task_data
+from utils import get_exp_no, gen_cleaned_task_data, id_cols
 
 def parse_task_df(df):
     task_a_cols = ['Participant Public ID', 'Participant Private ID', 'Task Name', 'Experiment Version', 'Spreadsheet', 'Trial Number', 'Reaction Time', 'Response', 'deck_a_p', 'deck_b_p', 'deck_c_p']
@@ -32,7 +32,7 @@ def parse_task_df(df):
 
     # renaming column
     participant_data = participant_data.rename(columns={'Spreadsheet': 'Probabilities', 'Task Name': 'Task Type'})
-    participant_data.set_index('Participant Public ID', inplace=True)
+    participant_data.set_index(id_cols, inplace=True)
 
     return participant_data.sort_index()
 
@@ -42,7 +42,7 @@ def parse_feedback_df(df):
     # filter out rows which have the feedback participants gave about how they're feeling & their probability estimate for each deck + confidence level
     participant_feedback = df.loc[df['Zone Type'] == "response_rating_scale_likert",
                                                 fb_a_cols]
-    participant_feedback.set_index('Participant Public ID', inplace=True)
+    participant_feedback.set_index(id_cols, inplace=True)
 
     return participant_feedback.sort_index()
 

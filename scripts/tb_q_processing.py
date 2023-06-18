@@ -3,7 +3,7 @@ import pandas as pd
 import csv
 import sys
 from datetime import datetime
-from utils import get_exp_no, q_map
+from utils import get_exp_no, q_map, id_cols
 
 incl_q = ["AUDIT", "BIS", "AES", "TEPS", "ASRS", "AQ", "OCI", "NCS", "STAI", "SDS", "LSAS", "EAT", "SSMS", "SPSRQ", "SHAPS"]
 excl_col = ['Q_EAT_Current Weight']
@@ -11,7 +11,7 @@ excl_col = ['Q_EAT_Current Weight']
 
 # reading raw questionnaire files (as downloaded from Gorilla in short form) and aggregating them into a dict
 def aggregate_questionnaires(cwd, dir):
-    id_string = 'Participant Private ID' if dir == "HC" else 'Participant Public ID'
+    # id_string = 'Participant Private ID' if dir == "HC" else 'Participant Public ID'
     q_dfs = {}
 
     for root, dirs, files in os.walk(cwd):
@@ -35,7 +35,7 @@ def aggregate_questionnaires(cwd, dir):
 
                             new_sheet_name = q_acronym.upper()
 
-                            q_df.set_index(id_string, inplace=True)
+                            q_df.set_index(id_cols, inplace=True)
                             q_dfs[new_sheet_name] = q_df.iloc[:-1,:].sort_index() #add this questionnaire to dict of all questionnaires
 
     return q_dfs

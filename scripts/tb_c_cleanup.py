@@ -1,7 +1,7 @@
 import pandas as pd
 import sys
 from datetime import datetime
-from utils import get_exp_no, gen_cleaned_task_data
+from utils import get_exp_no, gen_cleaned_task_data, id_cols
 
 participant_dir = sys.argv[1] #PT or HC - i.e. Patient or Healthy Control directories
 
@@ -20,7 +20,7 @@ def parse_task_df(df):
     participant_data = df.loc[(df['Screen Name'] == 'test_sample') & (df['display'] == 'trial'), task_cols]
 
     # select specific columns
-    participant_data.set_index('Participant Public ID', inplace=True)
+    participant_data.set_index(id_cols, inplace=True)
 
     # Reformat the index values using the custom function - assuming at least one is incorrectly formatted
     participant_data = participant_data.rename(index=lambda x: format_index(x))
