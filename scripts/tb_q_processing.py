@@ -141,7 +141,10 @@ if __name__ == "__main__":
     # Write the mapped questionnaire items to an Excel file
     with pd.ExcelWriter(save_dir+'Q_mapped-'+suffix+'.xlsx', engine='openpyxl') as writer:
         for sheet_name, df in q_dfs_mapped.items():
-            df_all_items = pd.concat([df_all_items, df],axis=1)
+            if sheet_name == "DEMO":
+                df.to_csv(save_dir+'DEMO-'+suffix+'.csv', index=True)
+            else:
+                df_all_items = pd.concat([df_all_items, df],axis=1)
             df = df.reset_index(drop=False)
             df.to_excel(writer, sheet_name=sheet_name, index=False)
 
