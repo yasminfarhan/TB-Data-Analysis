@@ -5,6 +5,59 @@ import sys
 from datetime import datetime
 from utils import get_exp_no
 
+# function to add task a features to participant dictionary using data, feedback dataframes
+def add_task_a_features(data_df, fb_df, p_dict, version):
+  num_trials = 99
+
+  # get list of unique participant ids
+  participant_ids = data_df.index.unique().tolist()
+
+  # iterate through participant ids, getting the info we need per participant and adding to participant dict
+  for id in participant_ids:
+    participant_data_df = data_df.loc[id] # this returns a 99x10 df reflecting the 99 trials and 10 columns for this participant id
+    participant_fb_df = fb_df.loc[id] # this returns feedback info for this participant
+
+    ###### task data ######
+    # get accuracy for this participant - i.e. the number of times within the 99 trials that this participant chose the deck with highest probability of reward/no loss
+    num_correct = 0
+    for i in range(participant_data_df.shape[0]):
+      rsp = participant_data_df['Response'][i].lower()
+      rsp_prob = participant_data_df['deck_'+rsp+'_p'][i]
+
+      if rsp_prob == max([participant_data_df['deck_a_p'][i], participant_data_df['deck_b_p'][i], participant_data_df['deck_c_p'][i]]):
+        num_correct += 1
+
+    # add accuracy to dict
+    p_dict[id]['A'+version+'_ACC'] = num_correct/num_trials
+
+    # get avg reaction time for this participant, and add to dict
+    avg_rt = participant_data_df['Reaction Time'].astype(float).mean()
+    p_dict[id]['A'+version+'_ART'] = avg_rt
+
+    ##### feedback data ######
+    participant_fb_df.loc[:,'Response'] = participant_fb_df['Response'].replace('', '0').astype(float) # convert response to float
+
+    # calculate average mid_feedback, add to dict
+    grouped_fb_df = participant_fb_df.groupby('display')['Response'].mean()
+    p_dict[id]['A'+version+'_AVG_MF'] = grouped_fb_df['mid_feedback']
+
+    # calculate average confidence, add to dict
+    avg_prob_conf = participant_fb_df.groupby(participant_fb_df['Screen Name'].str.contains('conf')).get_group(True)['Response'].astype(float).mean()
+    p_dict[id]['A'+version+'_AVG_PROB_CONF'] = avg_prob_conf
+
+    # calculate deck a, b, c prob estimate accuracy, add to dict
+    deck_a_prob_err_pct = (abs(participant_fb_df.loc[participant_fb_df['Screen Name'] == 'deck_a_prob', 'Response'].values[0]-50)/50)*100
+    deck_b_prob_err_pct = (abs(participant_fb_df.loc[participant_fb_df['Screen Name'] == 'deck_b_prob', 'Response'].values[0]-50)/50)*100
+    deck_c_prob_err_pct = (abs(participant_fb_df.loc[participant_fb_df['Screen Name'] == 'deck_c_prob', 'Response'].values[0]-50)/50)*100
+
+    p_dict[id]['A'+version+'_A_PROB_ERR_PCT'] = deck_a_prob_err_pct
+    p_dict[id]['A'+version+'_B_PROB_ERR_PCT'] = deck_b_prob_err_pct
+    p_dict[id]['A'+version+'_C_PROB_ERR_PCT'] = deck_c_prob_err_pct
+
+    if(version == "V3"):
+      p_dict[id]['AV3_V1_DIFF_ABS'] = abs(p_dict[id]['AV3_ACC'] - p_dict[id]['AV1_ACC'])
+      p_dict[id]['AV3_V1_DIFF_SIGN'] = (p_dict[id]['AV3_ACC'] - p_dict[id]['AV1_ACC'])
+
 # a function to retrieve the number of times response == 'find out now' in the passed in dataframe under some delay and/or prob condition
 def get_info_seeking_count(df, delay=None, prob=None):
   if delay is not None and prob is not None:
@@ -75,7 +128,7 @@ def add_task_b_features(data_df, fb_df, rwd_df, p_dict):
 ############## feedback data ##########################
         # CUE RATING - save rating for each of the three neutral cues (Apple, Ladder, Car) after having completed all trials
         for cue in ["A", "B", "C"]:
-            p_dict[id]["B_CUE_{}_RATING".format(cue)] = participant_fb_df[participant_fb_df['Screen Name'].str.contains("cue{}".format(cue))]['Response']
+            p_dict[id]["B_CUE_{}_RATING".format(cue)] = participant_fb_df[participant_fb_df['Screen Name'].str.contains("cue{}".format(cue))]['Response'][0]
 
         # AVG CUE RATING - Compute the average rating given across the three neutral cues (Apple, Ladder, Car) after having completed all trials
         p_dict[id]["B_AVG_CUE_RATING"] = participant_fb_df[participant_fb_df['Screen Name'].str.contains("cue")]['Response'].astype(float).mean()    
@@ -91,23 +144,65 @@ def add_task_b_features(data_df, fb_df, rwd_df, p_dict):
         # Multiply reward rating by info seeking behavior - used in mixed effects modeling
         p_dict[id]['B_RVxPROP_FON'] = p_dict[id]['B_POST_RWD_RATING']*p_dict[id]['B_PROP_FON']
 
-def process_task_b(exp_no, dir, save=True):
+def add_task_c_features():
+   pass
+
+def add_task_d_features():
+   pass
+
+######## PROCESSING FUNCS
+def process_task_a(exp_no, dir, ft_dict):
     current_date = datetime.now().strftime("%Y_%m_%d") #this assumes the files we're reading from were generated today
     suffix = "data_exp_"+exp_no+'-'+current_date
-    save_dir = '../data/cleaned_data/'+dir+'/'
+    read_dir = '../data/cleaned_data/'+dir+'/'
+    
+    # Av1
+    df_data_av1 = pd.read_csv(read_dir+'Av1-task_info-'+suffix+'.csv').set_index('Participant Public ID')
+    df_fb_av1 = pd.read_csv(read_dir+'Av1-fb_info-'+suffix+'.csv').set_index('Participant Public ID')
 
-    ft_dict = defaultdict(defaultdict)
+    # Av3
+    df_data_av3 = pd.read_csv(read_dir+'Av3-task_info-'+suffix+'.csv').set_index('Participant Public ID')
+    df_fb_av3 = pd.read_csv(read_dir+'Av3-fb_info-'+suffix+'.csv').set_index('Participant Public ID')
 
-    df_data = pd.read_csv(save_dir+'Bv3-task_info-'+suffix+'.csv').set_index('Participant Public ID')
-    df_fb = pd.read_csv(save_dir+'Bv3-fb_info-'+suffix+'.csv').set_index('Participant Public ID')
-    df_rwd = pd.read_csv(save_dir+'Bv3-rwd_info-'+suffix+'.csv').set_index('Participant Public ID')
+    add_task_a_features(df_data_av1, df_fb_av1, ft_dict, "V1")
+    add_task_a_features(df_data_av3, df_fb_av3, ft_dict, "V3")
+
+def process_task_b(exp_no, dir, ft_dict, save=True):
+    current_date = datetime.now().strftime("%Y_%m_%d") #this assumes the files we're reading from were generated today
+    suffix = "data_exp_"+exp_no+'-'+current_date
+    read_dir = '../data/cleaned_data/'+dir+'/'
+
+    df_data = pd.read_csv(read_dir+'Bv3-task_info-'+suffix+'.csv').set_index('Participant Public ID')
+    df_fb = pd.read_csv(read_dir+'Bv3-fb_info-'+suffix+'.csv').set_index('Participant Public ID')
+    df_rwd = pd.read_csv(read_dir+'Bv3-rwd_info-'+suffix+'.csv').set_index('Participant Public ID')
 
     add_task_b_features(df_data, df_fb, df_rwd, ft_dict)
 
-    if save: # if we choose to save task B feature info in an independent file
-       pd.DataFrame.from_dict(ft_dict, orient='index').to_csv(save_dir+'Bv3_FT_INFO-'+suffix+'.csv')
+def process_task_c(exp_no, dir, ft_dict, save=True):
+    current_date = datetime.now().strftime("%Y_%m_%d") #this assumes the files we're reading from were generated today
+    suffix = "data_exp_"+exp_no+'-'+current_date
+    read_dir = '../data/cleaned_data/'+dir+'/'
+
+    df_data = pd.read_csv(read_dir+'C-task_info-'+suffix+'.csv').set_index('Participant Public ID')
+
+    add_task_c_features(df_data, ft_dict)
+
+def process_task_d(exp_no, dir, ft_dict, save=True):
+    current_date = datetime.now().strftime("%Y_%m_%d") #this assumes the files we're reading from were generated today
+    suffix = "data_exp_"+exp_no+'-'+current_date
+    read_dir = '../data/cleaned_data/'+dir+'/'
 
 def main():
+    ft_dict = defaultdict(defaultdict)
     p_dir = sys.argv[1] #PT or HC - i.e. Patient or Healthy Control directories
-    ft_dict = process_task_b(get_exp_no("B", p_dir), p_dir)
+    save_dir = '../data/cleaned_data/'+p_dir+'/'
+    current_date = datetime.now().strftime("%Y_%m_%d") 
+
+    process_task_a(get_exp_no("A", p_dir), p_dir, ft_dict)
+    process_task_b(get_exp_no("B", p_dir), p_dir, ft_dict)
+    # process_task_c(get_exp_no("C", p_dir), p_dir, ft_dict)
+    # process_task_d(get_exp_no("D", p_dir), p_dir, ft_dict)
+
+    pd.DataFrame.from_dict(ft_dict, orient='index').to_csv(save_dir+'FT_INFO-'+current_date+'.csv')
+
 main()
