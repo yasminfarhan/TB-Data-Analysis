@@ -19,11 +19,9 @@ def parse_task_df(df):
     # filter out unnecessary rows & select specific columns
     participant_data = df.loc[(df['Screen Name'] == 'test_sample') & (df['display'] == 'trial'), task_cols]
 
-    # select specific columns
+    # Reformat the Public ID values using the custom function - assuming at least one is incorrectly formatted
+    participant_data['Participant Public ID'] = participant_data['Participant Public ID'].apply(lambda x: format_index(x))
     participant_data.set_index(id_cols, inplace=True)
-
-    # Reformat the index values using the custom function - assuming at least one is incorrectly formatted
-    participant_data = participant_data.rename(index=lambda x: format_index(x))
 
     return participant_data.sort_index()
 
