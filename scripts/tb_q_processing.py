@@ -5,7 +5,7 @@ import sys
 from datetime import datetime
 from utils import get_exp_no, q_map, id_cols
 
-incl_q = ["AUDIT", "BIS", "AES", "TEPS", "ASRS", "AQ", "OCI", "NCS", "STAI", "SDS", "LSAS", "EAT", "SSMS", "SPSRQ", "SHAPS"]
+incl_q = ["AUDIT", "BIS", "AES", "TEPS", "ASRS", "AQ", "OCI", "NCS", "STAI", "SDS", "LSAS", "EAT", "SSMS", "SPSRQ", "SHAPS", "Demographics"]
 excl_col = ['Q_EAT_Current Weight']
 # note - for SHAPS a higher score indicates higher anhedonia
 
@@ -27,16 +27,14 @@ def aggregate_questionnaires(cwd, dir):
                     if len(first_row) > 1:
                         task = first_row[task_idx]
                         if any(item in task for item in incl_q):
-                            q_acronym = task.split(' ')[-1][1:-1].split('-')[0].lower()
+                            q_acronym = task.split(' ')[-1][1:-1].split('-')[0].upper() if task != "Demographics" else "DEMO"
                             q_df = pd.read_csv(file_path)
                             
                             if(q_acronym == "oci"):
                                 q_acronym = "ocir"
 
-                            new_sheet_name = q_acronym.upper()
-
                             q_df.set_index(id_cols, inplace=True)
-                            q_dfs[new_sheet_name] = q_df.iloc[:-1,:].sort_index() #add this questionnaire to dict of all questionnaires
+                            q_dfs[q_acronym] = q_df.iloc[:-1,:].sort_index() #add this questionnaire to dict of all questionnaires
 
     return q_dfs
 
@@ -47,22 +45,24 @@ def gen_mapped_scores(_q_df_dict, _q_map):
 
     for q, q_df in _q_df_dict.items():
         q_key = q.split('_')[0].upper() #getting Q acronym
-        q_cols = [col for col in q_df.columns if col.startswith('Q_') and 'quantised' not in col and 'text' not in col] #get only the numerical columns we want to include
 
-        # new q_df with mapped scores
-        q_df_mapped = pd.DataFrame()
+        if q_key in _q_map.keys():
+            q_cols = [col for col in q_df.columns if col.startswith('Q_') and 'quantised' not in col and 'text' not in col] #get only the numerical columns we want to include
 
-        for col in q_cols:
-            if "REV" in col:
-                q_df_mapped[col] = q_df[col].map(_q_map[q_key]["REVERSED"]).fillna(q_df[col])
-            else:
-                if col == "Q_EAT_C3":
-                    q_df_mapped[col] = q_df[col].map(_q_map[q_key]["NORMAL_C3"]).fillna(q_df[col])
+            # new q_df with mapped scores
+            q_df_mapped = pd.DataFrame()
+
+            for col in q_cols:
+                if "REV" in col:
+                    q_df_mapped[col] = q_df[col].map(_q_map[q_key]["REVERSED"]).fillna(q_df[col])
                 else:
-                    q_df_mapped[col] = q_df[col].map(_q_map[q_key]["NORMAL"]).fillna(q_df[col])
+                    if col == "Q_EAT_C3":
+                        q_df_mapped[col] = q_df[col].map(_q_map[q_key]["NORMAL_C3"]).fillna(q_df[col])
+                    else:
+                        q_df_mapped[col] = q_df[col].map(_q_map[q_key]["NORMAL"]).fillna(q_df[col])
 
-        # add this questionnaires mapped scores to the df
-        q_df_mapped_dict[q_key] = q_df_mapped
+            # add this questionnaires mapped scores to the df
+            q_df_mapped_dict[q_key] = q_df_mapped
 
     return q_df_mapped_dict
 
