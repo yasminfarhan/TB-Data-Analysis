@@ -43,7 +43,7 @@ def exclude_pp(df):
     df_excl = df_excl.loc[(df_excl['B_PROP_FON'] != 0.48) & (df_excl['B_PROP_FON'] != 0.52)]
 
     # specify the columns for which we want to exclude outliers
-    exclude_cols = ['AV1_ART', 'AV1_ACC', 'AV3_ART', 'AV3_ACC', 'B_ART', 'C_ART', 'C_ACC', 'D1_NUM_TIMEOUTS', 'D1_1B_TGT_ACC', 'D1_2B_TGT_ACC', 'D1_3B_TGT_ACC', 'D1_4B_TGT_ACC', 'D1_5B_TGT_ACC', 'D1_6B_TGT_ACC', 'D1_1B_NON_TGT_ACC', 'D1_2B_NON_TGT_ACC', 'D1_3B_NON_TGT_ACC', 'D1_4B_NON_TGT_ACC', 'D1_5B_NON_TGT_ACC', 'D1_6B_NON_TGT_ACC', 'D3_NUM_TIMEOUTS']
+    exclude_cols = ['AV1_ART', 'AV3_ART', 'B_ART', 'C_ART', 'D1_NUM_TIMEOUTS', 'D1_1B_TGT_ACC', 'D1_2B_TGT_ACC', 'D1_3B_TGT_ACC', 'D1_4B_TGT_ACC', 'D1_5B_TGT_ACC', 'D1_6B_TGT_ACC', 'D1_1B_NON_TGT_ACC', 'D1_2B_NON_TGT_ACC', 'D1_3B_NON_TGT_ACC', 'D1_4B_NON_TGT_ACC', 'D1_5B_NON_TGT_ACC', 'D1_6B_NON_TGT_ACC', 'D3_NUM_TIMEOUTS']
 
     # define the condition for exclusion
     exclude_condition = (np.abs(stats.zscore(df_excl[exclude_cols]) > 3)).any(axis=1)
