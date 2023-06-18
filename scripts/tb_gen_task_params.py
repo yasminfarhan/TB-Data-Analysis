@@ -194,7 +194,7 @@ def add_task_d_features(df_d1_data, df_d1_ntlx, df_d2_data, df_d3_data, p_dict):
         p_d3 = df_d3_data.loc[id] 
 
     ### D1 ###################
-        p_dict[id]["D1_NUM_TIMEOUTS"] = p_d1[p_d1['Timed Out'] == "1"].shape[0]
+        p_dict[id]["D1_NUM_TIMEOUTS"] = p_d1[p_d1['Timed Out'] == 1].shape[0]
 
         # generate D1_1B_TGT_ACC, D1_2B_TGT_ACC, D1_3B_TGT_ACC, D1_4B_TGT_ACC, D1_5B_TGT_ACC, D1_6B_TGT_ACC, add to participant dict
         for i in range(1,7):
@@ -221,10 +221,11 @@ def add_task_d_features(df_d1_data, df_d1_ntlx, df_d2_data, df_d3_data, p_dict):
             # average reaction time at this level
             p_dict[id][str_prefix+"_ART"] = p_d2[p_d2['Level'] == i]['Reaction Time'].astype(float).mean()
 
-        ### D3 ################### - generate proportion of timeouts, target accuracy
-            p_dict[id]["D3_NUM_TIMEOUTS"] = p_d3[p_d3['Timed Out'] == "1"].shape[0]
-            p_dict[id]["D3_TGT_ACC"] = p_d3[(p_d3['Correct'].astype(float) == 1) & (p_d3['IsTarget'].astype(float) == 1)].shape[0]/p_d3[(p_d3['IsTarget'].astype(float) == 1)].shape[0]
-            p_dict[id]["D3_NON_TGT_ACC"] = p_d3[(p_d3['Correct'].astype(float) == 1) & (p_d3['IsTarget'].astype(float) == 0)].shape[0]/p_d3[(p_d3['IsTarget'].astype(float) == 0)].shape[0]
+    ### D3 ################### - generate proportion of timeouts, target accuracy
+        p_dict[id]["D3_NUM_TIMEOUTS"] = p_d3[p_d3['Timed Out'] == 1].shape[0]
+        print(id, p_dict[id]["D3_NUM_TIMEOUTS"])
+        p_dict[id]["D3_TGT_ACC"] = p_d3[(p_d3['Correct'].astype(float) == 1) & (p_d3['IsTarget'].astype(float) == 1)].shape[0]/p_d3[(p_d3['IsTarget'].astype(float) == 1)].shape[0]
+        p_dict[id]["D3_NON_TGT_ACC"] = p_d3[(p_d3['Correct'].astype(float) == 1) & (p_d3['IsTarget'].astype(float) == 0)].shape[0]/p_d3[(p_d3['IsTarget'].astype(float) == 0)].shape[0]
 
 ######## PROCESSING FUNCS
 def process_task_a(exp_no, dir, ft_dict):
