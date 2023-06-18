@@ -10,7 +10,8 @@ excl_col = ['Q_EAT_Current Weight']
 # note - for SHAPS a higher score indicates higher anhedonia
 
 # reading raw questionnaire files (as downloaded from Gorilla in short form) and aggregating them into a dict
-def aggregate_questionnaires(cwd):
+def aggregate_questionnaires(cwd, dir):
+    id_string = 'Participant Private ID' if dir == "HC" else 'Participant Public ID'
     q_dfs = {}
 
     for root, dirs, files in os.walk(cwd):
@@ -34,7 +35,7 @@ def aggregate_questionnaires(cwd):
 
                             new_sheet_name = q_acronym.upper()
 
-                            q_df.set_index('Participant Private ID', inplace=True)
+                            q_df.set_index(id_string, inplace=True)
                             q_dfs[new_sheet_name] = q_df.iloc[:-1,:].sort_index() #add this questionnaire to dict of all questionnaires
 
     return q_dfs
@@ -106,7 +107,7 @@ if __name__ == "__main__":
     save_dir = '../data/cleaned_data/'+participant_dir+'/'
     path_to_q_dir = '../data/raw_data/'+participant_dir+'/Questionnaires/'
 
-    q_dfs_aggr = aggregate_questionnaires(path_to_q_dir) # aggregate raw questionnaires
+    q_dfs_aggr = aggregate_questionnaires(path_to_q_dir, participant_dir) # aggregate raw questionnaires
     q_dfs_mapped = gen_mapped_scores(q_dfs_aggr, q_map) 
     df_scores = compute_scores(q_dfs_mapped, q_map)
     df_all_items = pd.DataFrame()

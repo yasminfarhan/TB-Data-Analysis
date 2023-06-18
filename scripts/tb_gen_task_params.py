@@ -144,8 +144,21 @@ def add_task_b_features(data_df, fb_df, rwd_df, p_dict):
         # Multiply reward rating by info seeking behavior - used in mixed effects modeling
         p_dict[id]['B_RVxPROP_FON'] = p_dict[id]['B_POST_RWD_RATING']*p_dict[id]['B_PROP_FON']
 
-def add_task_c_features():
-   pass
+def add_task_c_features(data_df, p_dict):
+  num_trials = 20
+
+  # get list of unique participant ids
+  participant_ids = data_df.index.unique().tolist()
+
+  # iterate through participant ids, getting the info we need per participant and adding to participant dict
+  for id in participant_ids:
+    participant_data_df = data_df.loc[id] 
+
+    # Compute Average Reaction Time (ART), add to dict
+    p_dict[id]["C_ART"] = participant_data_df['Reaction Time'].astype(float).mean()
+
+    # C_ACC - Compute accuracy by counting number of rows where 'Correct' == 1
+    p_dict[id]["C_ACC"] = (participant_data_df[(participant_data_df['Correct'].astype(float) == 1)].shape[0])/num_trials
 
 def add_task_d_features():
    pass
@@ -192,6 +205,7 @@ def process_task_d(exp_no, dir, ft_dict, save=True):
     suffix = "data_exp_"+exp_no+'-'+current_date
     read_dir = '../data/cleaned_data/'+dir+'/'
 
+#### MAIN
 def main():
     ft_dict = defaultdict(defaultdict)
     p_dir = sys.argv[1] #PT or HC - i.e. Patient or Healthy Control directories
@@ -200,7 +214,7 @@ def main():
 
     process_task_a(get_exp_no("A", p_dir), p_dir, ft_dict)
     process_task_b(get_exp_no("B", p_dir), p_dir, ft_dict)
-    # process_task_c(get_exp_no("C", p_dir), p_dir, ft_dict)
+    process_task_c(get_exp_no("C", p_dir), p_dir, ft_dict)
     # process_task_d(get_exp_no("D", p_dir), p_dir, ft_dict)
 
     pd.DataFrame.from_dict(ft_dict, orient='index').to_csv(save_dir+'FT_INFO-'+current_date+'.csv')

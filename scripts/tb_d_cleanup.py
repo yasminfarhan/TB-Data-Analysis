@@ -20,7 +20,7 @@ def parse_d_df(df):
     participant_data = participant_data.rename(columns={'Answer': 'IsTarget', 'Spreadsheet': 'Level'})
     participant_data = participant_data.sort_values(by=['Participant Private ID', 'Level'])
 
-    participant_data.set_index('Participant Private ID', inplace=True)
+    participant_data.set_index('Participant Public ID', inplace=True)
 
     return participant_data
 
@@ -48,13 +48,13 @@ def parse_d2_df(df):
     participant_data = participant_data.rename(columns={'Response': 'IsEasy', 'Spreadsheet': 'Level'})
     participant_data = participant_data.sort_values(by=['Participant Private ID', 'Level'])
 
-    participant_data.set_index('Participant Private ID', inplace=True)
+    participant_data.set_index('Participant Public ID', inplace=True)
 
     return participant_data
 
 def parse_ntlx(df):
     # don't change anything - we're going to make use of the imported gen_mapped_scores, compute_scores for processing 
-    df.set_index('Participant Private ID', inplace=True)
+    df.set_index('Participant Public ID', inplace=True)
 
     return df
 
@@ -64,8 +64,8 @@ def gen_ntlx(df):
     cols = ['NTLX_1', 'NTLX_2', 'NTLX_3', 'NTLX_4', 'NTLX_5', 'NTLX_6']
 
     # reformatting NTLX df so that there is only a single row per participant, and total NTLX scores as cols
-    for pvid, ntlx_scores in scores.groupby('Participant Private ID'):
-        ntlx_scores.set_index('Participant Private ID', inplace=True)
+    for pvid, ntlx_scores in scores.groupby('Participant Public ID'):
+        ntlx_scores.set_index('Participant Public ID', inplace=True)
         ntlx_scores = ntlx_scores.transpose()
         ntlx_scores.columns = cols
         ntlx_scores.index = [pvid]

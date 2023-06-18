@@ -32,7 +32,7 @@ def parse_task_df(df):
 
     # renaming column
     participant_data = participant_data.rename(columns={'Spreadsheet': 'Probabilities', 'Task Name': 'Task Type'})
-    participant_data.set_index('Participant Private ID', inplace=True)
+    participant_data.set_index('Participant Public ID', inplace=True)
 
     return participant_data.sort_index()
 
@@ -42,7 +42,7 @@ def parse_feedback_df(df):
     # filter out rows which have the feedback participants gave about how they're feeling & their probability estimate for each deck + confidence level
     participant_feedback = df.loc[df['Zone Type'] == "response_rating_scale_likert",
                                                 fb_a_cols]
-    participant_feedback.set_index('Participant Private ID', inplace=True)
+    participant_feedback.set_index('Participant Public ID', inplace=True)
 
     return participant_feedback.sort_index()
 

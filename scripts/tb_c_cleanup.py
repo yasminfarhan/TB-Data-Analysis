@@ -3,6 +3,11 @@ import sys
 from datetime import datetime
 from utils import get_exp_no, gen_cleaned_task_data
 
+# function to reformat single idx string (from Public ID), starting from correctly formatted start string
+def format_index(id):
+    start_index = id.find('8247')
+    return id[start_index:].strip()
+    
 def parse_task_df(df):
     task_cols = ['Participant Public ID', 'Participant Private ID', 'Task Name', 'Experiment Version', 'Trial Number', 'Reaction Time', 'Correct']
 
@@ -10,7 +15,10 @@ def parse_task_df(df):
     participant_data = df.loc[(df['Screen Name'] == 'test_sample') & (df['display'] == 'trial'), task_cols]
 
     # select specific columns
-    participant_data.set_index('Participant Private ID', inplace=True)
+    participant_data.set_index('Participant Public ID', inplace=True)
+
+    # Reformat the index values using the custom function - assuming at least one is incorrectly formatted
+    participant_data = participant_data.rename(index=lambda x: format_index(x))
 
     return participant_data.sort_index()
 
