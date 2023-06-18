@@ -2,12 +2,27 @@ import os
 import pandas as pd
 import csv
 import sys
-from datetime import datetime
+from datetime import datetime as dt
+import datetime
 from utils import get_exp_no, q_map, id_cols
 
 incl_q = ["AUDIT", "BIS", "AES", "TEPS", "ASRS", "AQ", "OCI", "NCS", "STAI", "SDS", "LSAS", "EAT", "SSMS", "SPSRQ", "SHAPS", "Demographics"]
 excl_col = ['Q_EAT_Current Weight']
 # note - for SHAPS a higher score indicates higher anhedonia
+
+#function to calculate age
+def calculate_age(row):
+    birth_month = row['Demo-Birthday-month']
+    birth_day = row['Demo-Birthday-day']
+    birth_year = row['Demo-Birthday-year']
+
+    if birth_month == '' or birth_day == '' or birth_year == '':
+        return float("nan")
+
+    today = datetime.date.today()
+    birth_date = datetime.date(int(birth_year), int(birth_month), int(birth_day))
+    age = today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))
+    return age
 
 # reading raw questionnaire files (as downloaded from Gorilla in short form) and aggregating them into a dict
 def aggregate_questionnaires(cwd, dir):
@@ -59,8 +74,12 @@ def gen_mapped_scores(_q_df_dict, _q_map):
                         q_df_mapped[col] = q_df.loc[:, col].map(_q_map[q_key]["NORMAL_C3"]).fillna(q_df[col])
                     else:
                         q_df_mapped[col] = q_df.loc[:, col].map(_q_map[q_key]["NORMAL"]).fillna(q_df[col])
-        else: #just save selected cols as is
+        else: #just save selected cols as is - this is Demographics questionnaire
+            # replace birth month, day, year w/age
             q_df_mapped[q_cols] = q_df.loc[:, q_cols]
+
+            if q_key == "DEMO":
+                q_df_mapped["Demo-Age"] = q_df.apply(calculate_age, axis=1)
 
         # add this questionnaires mapped scores to the df
         q_df_mapped_dict[q_key] = q_df_mapped
@@ -104,7 +123,7 @@ if __name__ == "__main__":
     participant_dir = sys.argv[1] #PT or HC - i.e. Patient or Healthy Control directories
     exp_no = get_exp_no("Q", participant_dir) #experiment number in Gorilla - used for naming the output files
 
-    current_date = datetime.now().strftime("%Y_%m_%d") #for keeping track of when data files were generated
+    current_date = dt.now().strftime("%Y_%m_%d") #for keeping track of when data files were generated
     suffix = "data_exp_"+exp_no+'-'+current_date
     save_dir = '../data/cleaned_data/'+participant_dir+'/'
     path_to_q_dir = '../data/raw_data/'+participant_dir+'/'
