@@ -68,7 +68,7 @@ def gen_ntlx(df):
         ntlx_scores.set_index('Participant Public ID', inplace=True)
         ntlx_scores = ntlx_scores.transpose()
         ntlx_scores.columns = cols
-        ntlx_scores.index = [pvid]
+        ntlx_scores = ntlx_scores.set_index(pd.Index([pvid])).rename_axis('Participant Public ID')
 
         dfs.append(ntlx_scores)
     all_scores = pd.concat(dfs, axis=0)
