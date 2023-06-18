@@ -3,10 +3,15 @@ import sys
 from datetime import datetime
 from utils import get_exp_no, gen_cleaned_task_data
 
+participant_dir = sys.argv[1] #PT or HC - i.e. Patient or Healthy Control directories
+
 # function to reformat single idx string (from Public ID), starting from correctly formatted start string
 def format_index(id):
-    start_index = id.find('8247')
-    return id[start_index:].strip()
+    if participant_dir == "PT":
+        start_index = id.find('8247')
+        return id[start_index:].strip()
+    else:
+        return id
     
 def parse_task_df(df):
     task_cols = ['Participant Public ID', 'Participant Private ID', 'Task Name', 'Experiment Version', 'Trial Number', 'Reaction Time', 'Correct']
@@ -23,7 +28,6 @@ def parse_task_df(df):
     return participant_data.sort_index()
 
 def main():
-    participant_dir = sys.argv[1] #PT or HC - i.e. Patient or Healthy Control directories
     exp_no = get_exp_no("C", participant_dir) #experiment number in Gorilla - used for naming the output files
 
     current_date = datetime.now().strftime("%Y_%m_%d") #for keeping track of when data files were generated

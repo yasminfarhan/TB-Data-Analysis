@@ -4,6 +4,8 @@ import sys
 from datetime import datetime
 from utils import get_exp_no
 
+bv = sys.argv[2] #version of task B, info seeking task (2 or 3)
+
 # function to add task a features to participant dictionary using data, feedback dataframes
 def add_task_a_features(data_df, fb_df, p_dict, version):
   
@@ -79,7 +81,7 @@ def add_task_b_features(data_df, fb_df, rwd_df, p_dict):
     
     # iterate through participant ids, getting the info we need per participant and adding to participant dict
     for id in participant_ids:
-        participant_fb_df = fb_df.loc[id] # this returns feedback info for this participant
+        participant_fb_df = fb_df.loc[id] if fb_df is not None else None # this returns feedback info for this participant
         participant_data_df = data_df.loc[id].tail(44) # this returns a 25x6 df reflecting the 25 (or 44) trials and 6 columns (Trial.Number, Timed.Out, Reaction.Time, Response, delay, GotReward) for this participant id
         participant_rwd_df = rwd_df.loc[id]
 
@@ -102,8 +104,8 @@ def add_task_b_features(data_df, fb_df, rwd_df, p_dict):
         p_dict[id]["B_PROP_FON"] = (participant_data_df[(participant_data_df['Response'] == "find-out-now.png")].shape[0])/participant_data_df.shape[0]
 
         # Computing more granular FON proportions
-        probs = sorted(data_df["reward_prob"].unique().tolist()) #depending on the version of the task, we may have >1 probability condition
-        delays = sorted(data_df["delay"].unique().tolist())
+        probs = sorted(data_df["reward_prob"].unique().tolist()) if "reward_prob" in data_df.columns else []#depending on the version of the task, we may have >1 probability condition
+        delays = sorted(data_df["delay"].unique().tolist()) if "delay" in data_df.columns else []
 
         # PROP FON across delay conditions 
         for dly in delays:
@@ -130,23 +132,24 @@ def add_task_b_features(data_df, fb_df, rwd_df, p_dict):
                     p_dict[id][key] = num/denom
 
 ############## feedback data ##########################
-        # CUE RATING - save rating for each of the three neutral cues (Apple, Ladder, Car) after having completed all trials
-        for cue in ["A", "B", "C"]:
-            p_dict[id]["B_CUE_{}_RATING".format(cue)] = participant_fb_df[participant_fb_df['Screen Name'].str.contains("cue{}".format(cue))]['Response'][0]
+        if participant_fb_df is not None: #Bv2 doesn't have this information
+            # CUE RATING - save rating for each of the three neutral cues (Apple, Ladder, Car) after having completed all trials
+            for cue in ["A", "B", "C"]:
+                p_dict[id]["B_CUE_{}_RATING".format(cue)] = participant_fb_df[participant_fb_df['Screen Name'].str.contains("cue{}".format(cue))]['Response'][0]
 
-        # AVG CUE RATING - Compute the average rating given across the three neutral cues (Apple, Ladder, Car) after having completed all trials
-        p_dict[id]["B_AVG_CUE_RATING"] = participant_fb_df[participant_fb_df['Screen Name'].str.contains("cue")]['Response'].astype(float).mean()    
+            # AVG CUE RATING - Compute the average rating given across the three neutral cues (Apple, Ladder, Car) after having completed all trials
+            p_dict[id]["B_AVG_CUE_RATING"] = participant_fb_df[participant_fb_df['Screen Name'].str.contains("cue")]['Response'].astype(float).mean()    
 
-        # POST RWD RATING - Participant's rating of the reward videos overall AFTER having completed all trials
-        p_dict[id]["B_POST_RWD_RATING"] = participant_fb_df.loc[participant_fb_df['Screen Name'] == "reward_rate", 'Response'].astype(float).iloc[0]
+            # POST RWD RATING - Participant's rating of the reward videos overall AFTER having completed all trials
+            p_dict[id]["B_POST_RWD_RATING"] = participant_fb_df.loc[participant_fb_df['Screen Name'] == "reward_rate", 'Response'].astype(float).iloc[0]
 
-        # STATIC RATING - Participant's rating of the static video after having completed all trials
-        p_dict[id]["B_STATIC_RATING"] = participant_fb_df.loc[participant_fb_df['Screen Name'] == "static_rate", 'Response'].astype(float).iloc[0]
+            # STATIC RATING - Participant's rating of the static video after having completed all trials
+            p_dict[id]["B_STATIC_RATING"] = participant_fb_df.loc[participant_fb_df['Screen Name'] == "static_rate", 'Response'].astype(float).iloc[0]
 
 ############## interactions ###########################
 
-        # Multiply reward rating by info seeking behavior - used in mixed effects modeling
-        p_dict[id]['B_RVxPROP_FON'] = p_dict[id]['B_POST_RWD_RATING']*p_dict[id]['B_PROP_FON']
+            # Multiply reward rating by info seeking behavior - used in mixed effects modeling
+            p_dict[id]['B_RVxPROP_FON'] = p_dict[id]['B_POST_RWD_RATING']*p_dict[id]['B_PROP_FON']
 
 def add_task_c_features(data_df, p_dict):
 
@@ -248,11 +251,14 @@ def process_task_b(exp_no, dir, ft_dict):
     suffix = "data_exp_"+exp_no+'-'+current_date
     read_dir = '../data/cleaned_data/'+dir+'/'
 
-    df_data = pd.read_csv(read_dir+'Bv3-task_info-'+suffix+'.csv').set_index('Participant Public ID')
-    df_fb = pd.read_csv(read_dir+'Bv3-fb_info-'+suffix+'.csv').set_index('Participant Public ID')
-    df_rwd = pd.read_csv(read_dir+'Bv3-rwd_info-'+suffix+'.csv').set_index('Participant Public ID')
+    df_data = pd.read_csv('{}Bv{}-task_info-{}.csv'.format(read_dir, bv, suffix)).set_index('Participant Public ID')
+    df_rwd = pd.read_csv('{}Bv{}-rwd_info-{}.csv'.format(read_dir, bv, suffix)).set_index('Participant Public ID')
 
-    add_task_b_features(df_data, df_fb, df_rwd, ft_dict)
+    if bv == "2":
+        add_task_b_features(df_data, None, df_rwd, ft_dict)
+    elif bv == "3":
+        df_fb = pd.read_csv(read_dir+'Bv3-fb_info-'+suffix+'.csv').set_index('Participant Public ID')
+        add_task_b_features(df_data, df_fb, df_rwd, ft_dict)
 
 def process_task_c(exp_no, dir, ft_dict):
     current_date = datetime.now().strftime("%Y_%m_%d") #this assumes the files we're reading from were generated today

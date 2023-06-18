@@ -103,6 +103,8 @@ def main():
     else:
         print("This version of the information seeking task (B) is not supported.")
         save = False
+
+    # only save if we support this version of the task
     if save:
         task_df.to_csv(save_dir+'Bv{}-task_info-{}.csv'.format(v, suffix), index=True)
         rwd_df.to_csv(save_dir+'Bv{}-rwd_info-{}.csv'.format(v, suffix), index=True)
