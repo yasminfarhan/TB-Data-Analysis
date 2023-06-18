@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy as np
 from collections import defaultdict
 import sys 
 from datetime import datetime
@@ -7,56 +6,62 @@ from utils import get_exp_no
 
 # function to add task a features to participant dictionary using data, feedback dataframes
 def add_task_a_features(data_df, fb_df, p_dict, version):
-  num_trials = 99
+  
+    # get list of unique participant ids
+    participant_ids = data_df.index.unique().tolist()
+    
+    if "volatile" in data_df['Probabilities'].iloc[0]:
+        a_actual_prob = b_actual_prob = c_actual_prob = data_df[['deck_a_p', 'deck_b_p', 'deck_c_p']].iloc[0].mean()*100 #average of first row's probabilities - should always be some combo of these
+    else: #fixed probabilities
+        a_actual_prob = data_df['deck_a_p'].iloc[0]*100
+        b_actual_prob = data_df['deck_b_p'].iloc[0]*100
+        c_actual_prob = data_df['deck_c_p'].iloc[0]*100
 
-  # get list of unique participant ids
-  participant_ids = data_df.index.unique().tolist()
+    # iterate through participant ids, getting the info we need per participant and adding to participant dict
+    for id in participant_ids:
+            participant_data_df = data_df.loc[id] # this returns a num_trialsx10 df 
+            participant_fb_df = fb_df.loc[id] # this returns feedback info for this participant
 
-  # iterate through participant ids, getting the info we need per participant and adding to participant dict
-  for id in participant_ids:
-    participant_data_df = data_df.loc[id] # this returns a 99x10 df reflecting the 99 trials and 10 columns for this participant id
-    participant_fb_df = fb_df.loc[id] # this returns feedback info for this participant
+            ###### task data ######
+            # get accuracy for this participant - i.e. the number of times within the 99 trials that this participant chose the deck with highest probability of reward/no loss
+            num_correct = 0
+            for i in range(participant_data_df.shape[0]):
+                rsp = participant_data_df['Response'][i].lower()
+                rsp_prob = participant_data_df['deck_'+rsp+'_p'][i]
 
-    ###### task data ######
-    # get accuracy for this participant - i.e. the number of times within the 99 trials that this participant chose the deck with highest probability of reward/no loss
-    num_correct = 0
-    for i in range(participant_data_df.shape[0]):
-      rsp = participant_data_df['Response'][i].lower()
-      rsp_prob = participant_data_df['deck_'+rsp+'_p'][i]
+                if rsp_prob == max([participant_data_df['deck_a_p'][i], participant_data_df['deck_b_p'][i], participant_data_df['deck_c_p'][i]]):
+                    num_correct += 1
 
-      if rsp_prob == max([participant_data_df['deck_a_p'][i], participant_data_df['deck_b_p'][i], participant_data_df['deck_c_p'][i]]):
-        num_correct += 1
+            # add accuracy to dict
+            p_dict[id]['A'+version+'_ACC'] = num_correct/participant_data_df.shape[0]
 
-    # add accuracy to dict
-    p_dict[id]['A'+version+'_ACC'] = num_correct/num_trials
+            # get avg reaction time for this participant, and add to dict
+            avg_rt = participant_data_df['Reaction Time'].astype(float).mean()
+            p_dict[id]['A'+version+'_ART'] = avg_rt
 
-    # get avg reaction time for this participant, and add to dict
-    avg_rt = participant_data_df['Reaction Time'].astype(float).mean()
-    p_dict[id]['A'+version+'_ART'] = avg_rt
+            ##### feedback data ######
+            participant_fb_df.loc[:,'Response'] = participant_fb_df['Response'].replace('', '0').astype(float) # convert response to float
 
-    ##### feedback data ######
-    participant_fb_df.loc[:,'Response'] = participant_fb_df['Response'].replace('', '0').astype(float) # convert response to float
+            # calculate average mid_feedback, add to dict
+            grouped_fb_df = participant_fb_df.groupby('display')['Response'].mean()
+            p_dict[id]['A'+version+'_AVG_MF'] = grouped_fb_df['mid_feedback']
 
-    # calculate average mid_feedback, add to dict
-    grouped_fb_df = participant_fb_df.groupby('display')['Response'].mean()
-    p_dict[id]['A'+version+'_AVG_MF'] = grouped_fb_df['mid_feedback']
+            # calculate average confidence, add to dict
+            avg_prob_conf = participant_fb_df.groupby(participant_fb_df['Screen Name'].str.contains('conf')).get_group(True)['Response'].astype(float).mean()
+            p_dict[id]['A'+version+'_AVG_PROB_CONF'] = avg_prob_conf
 
-    # calculate average confidence, add to dict
-    avg_prob_conf = participant_fb_df.groupby(participant_fb_df['Screen Name'].str.contains('conf')).get_group(True)['Response'].astype(float).mean()
-    p_dict[id]['A'+version+'_AVG_PROB_CONF'] = avg_prob_conf
+            # calculate deck a, b, c prob estimate accuracy, add to dict
+            deck_a_prob_err_pct = (abs(participant_fb_df.loc[participant_fb_df['Screen Name'] == 'deck_a_prob', 'Response'].values[0]-a_actual_prob)/a_actual_prob)*100
+            deck_b_prob_err_pct = (abs(participant_fb_df.loc[participant_fb_df['Screen Name'] == 'deck_b_prob', 'Response'].values[0]-b_actual_prob)/b_actual_prob)*100
+            deck_c_prob_err_pct = (abs(participant_fb_df.loc[participant_fb_df['Screen Name'] == 'deck_c_prob', 'Response'].values[0]-c_actual_prob)/c_actual_prob)*100
 
-    # calculate deck a, b, c prob estimate accuracy, add to dict
-    deck_a_prob_err_pct = (abs(participant_fb_df.loc[participant_fb_df['Screen Name'] == 'deck_a_prob', 'Response'].values[0]-50)/50)*100
-    deck_b_prob_err_pct = (abs(participant_fb_df.loc[participant_fb_df['Screen Name'] == 'deck_b_prob', 'Response'].values[0]-50)/50)*100
-    deck_c_prob_err_pct = (abs(participant_fb_df.loc[participant_fb_df['Screen Name'] == 'deck_c_prob', 'Response'].values[0]-50)/50)*100
+            p_dict[id]['A'+version+'_A_PROB_ERR_PCT'] = deck_a_prob_err_pct
+            p_dict[id]['A'+version+'_B_PROB_ERR_PCT'] = deck_b_prob_err_pct
+            p_dict[id]['A'+version+'_C_PROB_ERR_PCT'] = deck_c_prob_err_pct
 
-    p_dict[id]['A'+version+'_A_PROB_ERR_PCT'] = deck_a_prob_err_pct
-    p_dict[id]['A'+version+'_B_PROB_ERR_PCT'] = deck_b_prob_err_pct
-    p_dict[id]['A'+version+'_C_PROB_ERR_PCT'] = deck_c_prob_err_pct
-
-    if(version == "V3"):
-      p_dict[id]['AV3_V1_DIFF_ABS'] = abs(p_dict[id]['AV3_ACC'] - p_dict[id]['AV1_ACC'])
-      p_dict[id]['AV3_V1_DIFF_SIGN'] = (p_dict[id]['AV3_ACC'] - p_dict[id]['AV1_ACC'])
+            if(version == "V3"):
+                p_dict[id]['AV3_V1_DIFF_ABS'] = abs(p_dict[id]['AV3_ACC'] - p_dict[id]['AV1_ACC'])
+                p_dict[id]['AV3_V1_DIFF_SIGN'] = (p_dict[id]['AV3_ACC'] - p_dict[id]['AV1_ACC'])
 
 # a function to retrieve the number of times response == 'find out now' in the passed in dataframe under some delay and/or prob condition
 def get_info_seeking_count(df, delay=None, prob=None):
@@ -144,7 +149,6 @@ def add_task_b_features(data_df, fb_df, rwd_df, p_dict):
         p_dict[id]['B_RVxPROP_FON'] = p_dict[id]['B_POST_RWD_RATING']*p_dict[id]['B_PROP_FON']
 
 def add_task_c_features(data_df, p_dict):
-    num_trials = 20
 
     # get list of unique participant ids
     participant_ids = data_df.index.unique().tolist()
@@ -157,7 +161,7 @@ def add_task_c_features(data_df, p_dict):
         p_dict[id]["C_ART"] = participant_data_df['Reaction Time'].astype(float).mean()
 
         # C_ACC - Compute accuracy by counting number of rows where 'Correct' == 1
-        p_dict[id]["C_ACC"] = (participant_data_df[(participant_data_df['Correct'].astype(float) == 1)].shape[0])/num_trials
+        p_dict[id]["C_ACC"] = (participant_data_df[(participant_data_df['Correct'].astype(float) == 1)].shape[0])/participant_data_df.shape[0] #divide by num trials
 
 # function to retrieve the 1st half of each N-Back run if long version for fair acc comparison w/participants who did the short version
 def get_short_nback(df, trials_per_run=64):
