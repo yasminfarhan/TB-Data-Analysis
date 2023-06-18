@@ -61,7 +61,7 @@ def parse_ntlx(df):
 def gen_ntlx(df):
     scores = compute_scores(gen_mapped_scores({"NTLX": df}, q_map), q_map)
     dfs = []
-    cols = ['NTLX_1', 'NTLX_2', 'NTLX_3', 'NTLX_4', 'NTLX_5', 'NTLX_6']
+    cols = ['D1_NTLX_1_SCORE', 'D1_NTLX_2_SCORE', 'D1_NTLX_3_SCORE', 'D1_NTLX_4_SCORE', 'D1_NTLX_5_SCORE', 'D1_NTLX_6_SCORE']
 
     # reformatting NTLX df so that there is only a single row per participant, and total NTLX scores as cols
     for pvid, ntlx_scores in scores.groupby('Participant Public ID'):

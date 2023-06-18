@@ -178,9 +178,10 @@ def get_short_nback(df, trials_per_run=64):
     else: #short version, needs no modifications
         return df
 
-def add_task_d_features(df_d1_data, df_d2_data, df_d3_data, p_dict):
+def add_task_d_features(df_d1_data, df_d1_ntlx, df_d2_data, df_d3_data, p_dict):
     # get list of unique participant ids
     participant_ids = df_d1_data.index.unique().tolist()
+    ntlx_dict = df_d1_ntlx.to_dict('index')
 
     # iterate through participant ids, getting the info we need per participant and adding to participant dict
     for id in participant_ids:        
@@ -199,6 +200,10 @@ def add_task_d_features(df_d1_data, df_d2_data, df_d3_data, p_dict):
 
             p_dict[id]["D1_"+str(i)+"B_TGT_ACC"] = d1_lvl[(d1_lvl['Correct'].astype(float) == 1) & (d1_lvl['IsTarget'].astype(float) == 1)].shape[0]/d1_lvl_tot_tgt
             p_dict[id]["D1_"+str(i)+"B_NON_TGT_ACC"] = d1_lvl[(d1_lvl['Correct'].astype(float) == 1) & (d1_lvl['IsTarget'].astype(float) == 0)].shape[0]/d1_lvl_tot_nontgt
+
+        ### updating p_dict with NTLX values
+        for ntlx_key, ntlx_score in ntlx_dict[id].items():
+            p_dict[id][ntlx_key] = ntlx_score
 
     ### D2 ###################
         # generate features per decision level (1v2, 1v3, etc) and add to participant dict
@@ -260,10 +265,11 @@ def process_task_d(exp_no, dir, ft_dict):
     read_dir = '../data/cleaned_data/'+dir+'/'
 
     df_d1_data = pd.read_csv(read_dir+'D1-task_info-'+suffix+'.csv').set_index('Participant Public ID')
+    df_d1_ntlx = pd.read_csv(read_dir+'D1-NTLX_info-'+suffix+'.csv').set_index('Participant Public ID')
     df_d2_data = pd.read_csv(read_dir+'D2-task_info-'+suffix+'.csv').set_index('Participant Public ID')
     df_d3_data = pd.read_csv(read_dir+'D3-task_info-'+suffix+'.csv').set_index('Participant Public ID')
 
-    add_task_d_features(df_d1_data, df_d2_data, df_d3_data, ft_dict)
+    add_task_d_features(df_d1_data, df_d1_ntlx, df_d2_data, df_d3_data, ft_dict)
 
 #### MAIN
 def main():
