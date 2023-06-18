@@ -30,8 +30,8 @@ def aggregate_questionnaires(cwd, dir):
                             q_acronym = task.split(' ')[-1][1:-1].split('-')[0].upper() if task != "Demographics" else "DEMO"
                             q_df = pd.read_csv(file_path)
                             
-                            if(q_acronym == "oci"):
-                                q_acronym = "ocir"
+                            if(q_acronym == "OCI"):
+                                q_acronym = "OCIR"
 
                             q_df.set_index(id_cols, inplace=True)
                             q_dfs[q_acronym] = q_df.iloc[:-1,:].sort_index() #add this questionnaire to dict of all questionnaires
@@ -45,24 +45,25 @@ def gen_mapped_scores(_q_df_dict, _q_map):
 
     for q, q_df in _q_df_dict.items():
         q_key = q.split('_')[0].upper() #getting Q acronym
+        start_string = "Q_" if q_key != "DEMO" else "Demo"
+        q_df_mapped = pd.DataFrame() # new q_df with mapped scores
 
-        if q_key in _q_map.keys():
-            q_cols = [col for col in q_df.columns if col.startswith('Q_') and 'quantised' not in col and 'text' not in col] #get only the numerical columns we want to include
+        q_cols = [col for col in q_df.columns if col.startswith(start_string) and 'quantised' not in col and 'text' not in col] #get only the numerical columns we want to include
 
-            # new q_df with mapped scores
-            q_df_mapped = pd.DataFrame()
-
+        if q_key in _q_map.keys(): #is this a mappable questionnaire?
             for col in q_cols:
                 if "REV" in col:
-                    q_df_mapped[col] = q_df[col].map(_q_map[q_key]["REVERSED"]).fillna(q_df[col])
+                    q_df_mapped[col] = q_df.loc[:, col].map(_q_map[q_key]["REVERSED"]).fillna(q_df[col])
                 else:
                     if col == "Q_EAT_C3":
-                        q_df_mapped[col] = q_df[col].map(_q_map[q_key]["NORMAL_C3"]).fillna(q_df[col])
+                        q_df_mapped[col] = q_df.loc[:, col].map(_q_map[q_key]["NORMAL_C3"]).fillna(q_df[col])
                     else:
-                        q_df_mapped[col] = q_df[col].map(_q_map[q_key]["NORMAL"]).fillna(q_df[col])
+                        q_df_mapped[col] = q_df.loc[:, col].map(_q_map[q_key]["NORMAL"]).fillna(q_df[col])
+        else: #just save selected cols as is
+            q_df_mapped[q_cols] = q_df.loc[:, q_cols]
 
-            # add this questionnaires mapped scores to the df
-            q_df_mapped_dict[q_key] = q_df_mapped
+        # add this questionnaires mapped scores to the df
+        q_df_mapped_dict[q_key] = q_df_mapped
 
     return q_df_mapped_dict
 
@@ -71,28 +72,29 @@ def compute_scores(_q_df_mapped_dict, _q_map):
     df_scores = pd.DataFrame()
 
     for q, q_df in _q_df_mapped_dict.items():
-        tot_col_name = "Q_"+q+"_TOT_SCORE"
+        if q in _q_map.keys(): #is this a score computable questionnaire?
+            tot_col_name = "Q_"+q+"_TOT_SCORE"
 
-        if "SUBSCALES" in _q_map[q].keys():
-            for SS in _q_map[q]["SUBSCALES"]:
-                ss_col_name = "Q_"+q+"_"+SS+"_SCORE"
+            if "SUBSCALES" in _q_map[q].keys():
+                for SS in _q_map[q]["SUBSCALES"]:
+                    ss_col_name = "Q_"+q+"_"+SS+"_SCORE"
 
-                if q == "LSAS" or (q == "EAT" and SS == "C"): #there is no _ between SS and number, unlike other questionnaires, e.g. LSAS_A1 vs LSAS_A_1
-                    ss_cols = [col for col in q_df.columns if SS in col.split('_')[-1] and col not in excl_col] 
-                else:
-                    # get dataframe consisting only of subscale columns
-                    ss_cols = [col for col in q_df.columns if SS in col.split('_') and col not in excl_col]
+                    if q == "LSAS" or (q == "EAT" and SS == "C"): #there is no _ between SS and number, unlike other questionnaires, e.g. LSAS_A1 vs LSAS_A_1
+                        ss_cols = [col for col in q_df.columns if SS in col.split('_')[-1] and col not in excl_col] 
+                    else:
+                        # get dataframe consisting only of subscale columns
+                        ss_cols = [col for col in q_df.columns if SS in col.split('_') and col not in excl_col]
 
-                # extract a dataframe consisting of only the columns relevant to this subscale
-                ss_df = q_df.loc[:, ss_cols]
+                    # extract a dataframe consisting of only the columns relevant to this subscale
+                    ss_df = q_df.loc[:, ss_cols]
 
-                # add subscale column to df with all score sums
-                df_scores[ss_col_name] = ss_df.loc[:, list(ss_df.columns)].sum(axis=1, numeric_only=True)
+                    # add subscale column to df with all score sums
+                    df_scores[ss_col_name] = ss_df.loc[:, list(ss_df.columns)].sum(axis=1, numeric_only=True)
 
-            # compute total q score using ss scores
-            df_scores[tot_col_name] = df_scores.filter(like="Q_"+q).sum(axis=1, numeric_only=True) 
-        else:
-            df_scores[tot_col_name] = q_df.sum(axis=1, numeric_only=True)
+                # compute total q score using ss scores
+                df_scores[tot_col_name] = df_scores.filter(like="Q_"+q).sum(axis=1, numeric_only=True) 
+            else:
+                df_scores[tot_col_name] = q_df.sum(axis=1, numeric_only=True)
 
     return df_scores.reset_index(drop=False)    
 
