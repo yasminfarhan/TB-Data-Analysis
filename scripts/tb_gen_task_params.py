@@ -149,9 +149,13 @@ def add_task_b_features(data_df, fb_df, rwd_df, p_dict):
 
             # CUE RATING according to assignment
             cue_str = participant_fb_df['Spreadsheet'].values[0].split('cues')[-1]
-            p_dict[id]["B_CUE_RWD_RATING"] = cue_str[0]
-            p_dict[id]["B_CUE_NO_RWD_RATING"] = cue_str[1]
-            p_dict[id]["B_CUE_NO_INFO_RATING"] = cue_str[2]
+            rwd_str = cue_str[0]
+            no_rwd_str = cue_str[1]
+            no_info_str = cue_str[2]
+
+            p_dict[id]["B_CUE_RWD_RATING"] = p_dict[id]["B_CUE_{}_RATING".format(rwd_str)]
+            p_dict[id]["B_CUE_NO_RWD_RATING"] = p_dict[id]["B_CUE_{}_RATING".format(no_rwd_str)]
+            p_dict[id]["B_CUE_NO_INFO_RATING"] = p_dict[id]["B_CUE_{}_RATING".format(no_info_str)]
 
 ############## interactions ###########################
 
