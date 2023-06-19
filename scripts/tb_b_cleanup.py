@@ -58,6 +58,9 @@ def parse_feedback_df(df):
         (df['display'] == 'end'),
         fb_cols
     ].reset_index(drop=True).dropna()
+
+    if v == "2":
+        participant_data['Screen Name'] = participant_data['Screen Name'].map({"Screen 2": "cueA", "Screen 3": "cueB", "Screen 4": "cueC", "Screen 5": "reward_rate", "Screen 6": "static_rate"})
     participant_data.set_index(id_cols, inplace=True)
 
     return participant_data.sort_index()
@@ -91,22 +94,21 @@ def main():
     save = True
 
     if v == "2":
-        task_df = gen_cleaned_task_data(parse_task_df_v2, path_to_task_dir, "Bv2 - Information Seeking Task - Fixed Probability")
-        rwd_df = cleanup_rwd_q(path_to_task_dir)
+        task_name = "Bv2 - Information Seeking Task - Fixed Probability"      
+        task_df = gen_cleaned_task_data(parse_task_df_v2, path_to_task_dir, task_name)  
     elif v == "3":
-        task_df = gen_cleaned_task_data(parse_task_df_v3, path_to_task_dir, "Bv3 - Information Seeking Task - Varying Probability/Delay")
-        fb_df = gen_cleaned_task_data(parse_feedback_df, path_to_task_dir, "Bv3 - Information Seeking Task - Varying Probability/Delay")
-        rwd_df = cleanup_rwd_q(path_to_task_dir)
-
-        # writing Bv3 relevant dataframes to csv files
-        fb_df.to_csv(save_dir+'Bv3-fb_info-'+suffix+'.csv', index=True)
+        task_name = "Bv3 - Information Seeking Task - Varying Probability/Delay"
+        task_df = gen_cleaned_task_data(parse_task_df_v3, path_to_task_dir, task_name)
     else:
         print("This version of the information seeking task (B) is not supported.")
         save = False
 
     # only save if we support this version of the task
     if save:
+        fb_df = gen_cleaned_task_data(parse_feedback_df, path_to_task_dir, task_name)
+        rwd_df = cleanup_rwd_q(path_to_task_dir)
+
         task_df.to_csv(save_dir+'Bv{}-task_info-{}.csv'.format(v, suffix), index=True)
         rwd_df.to_csv(save_dir+'Bv{}-rwd_info-{}.csv'.format(v, suffix), index=True)
-
+        fb_df.to_csv(save_dir+'Bv{}-fb_info-{}.csv'.format(v, suffix), index=True)
 main()

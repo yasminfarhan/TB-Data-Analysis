@@ -264,12 +264,9 @@ def process_task_b(exp_no, dir, ft_dict):
 
     df_data = pd.read_csv('{}Bv{}-task_info-{}.csv'.format(read_dir, bv, suffix)).set_index(id_cols)
     df_rwd = pd.read_csv('{}Bv{}-rwd_info-{}.csv'.format(read_dir, bv, suffix)).set_index(id_cols)
+    df_fb = pd.read_csv('{}Bv{}-fb_info-{}.csv'.format(read_dir, bv, suffix)).set_index(id_cols)
 
-    if bv == "2":
-        add_task_b_features(df_data, None, df_rwd, ft_dict)
-    elif bv == "3":
-        df_fb = pd.read_csv(read_dir+'Bv3-fb_info-'+suffix+'.csv').set_index(id_cols)
-        add_task_b_features(df_data, df_fb, df_rwd, ft_dict)
+    add_task_b_features(df_data, df_fb, df_rwd, ft_dict)
 
 def process_task_c(exp_no, dir, ft_dict):
     current_date = datetime.now().strftime("%Y_%m_%d") #this assumes the files we're reading from were generated today
