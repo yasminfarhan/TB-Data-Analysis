@@ -147,6 +147,12 @@ def add_task_b_features(data_df, fb_df, rwd_df, p_dict):
             # STATIC RATING - Participant's rating of the static video after having completed all trials
             p_dict[id]["B_STATIC_RATING"] = participant_fb_df.loc[participant_fb_df['Screen Name'] == "static_rate", 'Response'].astype(float).iloc[0]
 
+            # CUE RATING according to assignment
+            cue_str = participant_fb_df['Spreadsheet'].values[0].split('cues')[-1]
+            p_dict[id]["B_CUE_RWD_RATING"] = cue_str[0]
+            p_dict[id]["B_CUE_NO_RWD_RATING"] = cue_str[1]
+            p_dict[id]["B_CUE_NO_INFO_RATING"] = cue_str[2]
+
 ############## interactions ###########################
 
             # Multiply reward rating by info seeking behavior - used in mixed effects modeling
