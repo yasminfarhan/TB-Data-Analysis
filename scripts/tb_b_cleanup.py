@@ -60,7 +60,7 @@ def parse_feedback_df(df):
     ].reset_index(drop=True).dropna()
 
     if v == "2":
-        participant_data['Screen Name'] = participant_data['Screen Name'].map({"Screen 2": "cueA", "Screen 3": "cueB", "Screen 4": "cueC", "Screen 5": "reward_rate", "Screen 6": "static_rate"})
+        participant_data['Screen Name'] = participant_data['Screen Name'].map({"Screen 2": "cueA", "Screen 3": "cueB", "Screen 4": "cueC", "Screen 5": "static_rate", "Screen 6": "reward_rate"})
     participant_data.set_index(id_cols, inplace=True)
 
     return participant_data.sort_index()
