@@ -5,32 +5,15 @@ from utils import get_exp_no, search_csv_files, concatenate_csv_files, gen_clean
 
 v = sys.argv[2] #What version of the Info Seeking Task (of 1,2,3)
 
-# Parsing the Bv3 spreadsheet to obtain participant's information seeking behavior
-def parse_task_df_v3(df):
-    task_cols = ['Participant Public ID', 'Participant Private ID', 'Task Name', 'Spreadsheet', 'Experiment Version', 'Trial Number', 'Reaction Time', 'Response', 'delay', 'reward_prob']
-
-    # Filter rows based on conditions and select the 'Screen.Name' column
-    outcome_column = df.loc[
-        (df['Screen Name'] == 'reward_pos') |
-        (df['Screen Name'] == 'reward_neg'),
-        'Screen Name'].map({'reward_pos': 'Yes', 'reward_neg': 'No'}).reset_index(drop=True)
-    
-    # Filter rows based on conditions and select specific columns
-    participant_data = df.loc[
-        (df['Screen Name'] == 'offer_b') &
-        (df['display'] == 'trial'),
-        task_cols
-    ].reset_index(drop=True)
-
-    participant_data['GotReward'] = outcome_column
-    participant_data.set_index(id_cols, inplace=True)
-
-    return participant_data.sort_index()
-
-# Parsing the Bv2 spreadsheet to obtain participant's information seeking behavior
-def parse_task_df_v2(df):
+# Parsing the BvX spreadsheet to obtain participant's information seeking behavior
+def parse_task_df(df):
     task_cols = ['Participant Public ID', 'Participant Private ID', 'Task Name', 'Spreadsheet', 'Experiment Version', 'Trial Number', 'Reaction Time', 'Response', 'delay']
 
+    # If this is the varying prob/delay version (Bv3), we also care about probability
+    if "Bv3" in df.loc[:, 'Task Name'].values[0]:
+        print(df.loc[:, 'Task Name'].values[0])
+        task_cols.append("reward_prob")
+
     # Filter rows based on conditions and select the 'Screen.Name' column
     outcome_column = df.loc[
         (df['Screen Name'] == 'reward_pos') |
@@ -49,7 +32,7 @@ def parse_task_df_v2(df):
 
     return participant_data.sort_index()
 
-# Parsing the Bv3 spreadsheet to obtain participant's feeback following task
+# Parsing the BvX spreadsheet to obtain participant's feeback following task
 def parse_feedback_df(df):
     fb_cols = ['Participant Public ID', 'Participant Private ID', 'Task Name', 'Spreadsheet', 'Experiment Version', 'Screen Name', 'Response']
 
@@ -95,13 +78,13 @@ def main():
 
     if v == "2":
         task_name = "Bv2 - Information Seeking Task - Fixed Probability"      
-        task_df = gen_cleaned_task_data(parse_task_df_v2, path_to_task_dir, task_name)  
     elif v == "3":
         task_name = "Bv3 - Information Seeking Task - Varying Probability/Delay"
-        task_df = gen_cleaned_task_data(parse_task_df_v3, path_to_task_dir, task_name)
     else:
         print("This version of the information seeking task (B) is not supported.")
         save = False
+        
+    task_df = gen_cleaned_task_data(parse_task_df, path_to_task_dir, task_name)
 
     # only save if we support this version of the task
     if save:
