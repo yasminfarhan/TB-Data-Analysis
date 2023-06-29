@@ -65,7 +65,6 @@ def gen_ntlx(df):
 
     # reformatting NTLX df so that there is only a single row per participant, and total NTLX scores as cols
     for pid, ntlx_scores in scores.groupby(id_cols):
-        print(pid)
         ntlx_scores.set_index(id_cols, inplace=True)
         ntlx_scores = ntlx_scores.transpose()
         ntlx_scores.columns = cols

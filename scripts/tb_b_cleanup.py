@@ -11,7 +11,6 @@ def parse_task_df(df):
 
     # If this is the varying prob/delay version (Bv3), we also care about probability
     if "Bv3" in df.loc[:, 'Task Name'].values[0]:
-        print(df.loc[:, 'Task Name'].values[0])
         task_cols.append("reward_prob")
 
     # Filter rows based on conditions and select the 'Screen.Name' column
