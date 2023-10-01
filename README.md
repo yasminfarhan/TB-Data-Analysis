@@ -4,7 +4,6 @@
 <h1 align="center">
 <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT46xYN2VAk3ZgHs4MYvAWy-PkBfUBwG9XzO_YaJYE&s" width="100" /> 
 <br>TB-Data-Analysis</h1>
-<h3>◦ HTTPStatus Exception: 429</h3>
 <h3>◦ Developed with the software and tools below.</h3>
 
 <p align="center">
@@ -114,13 +113,25 @@ pip install -r requirements.txt
 
 ### 🤖 Running TB-Data-Analysis
 
+Prior to running any cleanup scripts, ensure that you have downloaded the raw experiment data from Gorilla and manually organized the files into the HC (Healthy Control) and PT (Patient) directories. Additionally ensure that only data you wish to have preprocessed is included in the raw_data directory as the scripts in their current state will not distinguish between outdated and up to date experiment files.
+
+Cleaned up csv files will be generated and saved into the relevant cleaned_data/PT or cleaned_data/HC directory, according to the command line argument specifed. 
+
+#### Running Scripts
+
+All scripts can be run in nearly the same way. For example, to run tb_a_cleanup.py, you would run:
+
 ```sh
-python main.py
+python tb_a_cleanup.py [DIRECTORY]
 ```
+
+where [DIRECTORY] is either HC or PT. The only exception to this is tb_b_cleanup.py, which requires the additional command line argument [EXPERIMENT_V], which can be either 1,2, or 3. 
+
+The expected order of running these scripts would be that, following the saving of experiment data to their respective folders in raw_data, you would run tb_[TASK_V]_cleanup.py for tasks A-D, as well as tb_q_processing.py to generate the cleaned up experiment csv files, followed by tb_gen_task_params.py to generate the task features from those csv files for ease of further analysis. 
 
 ## 👏 Acknowledgments
 
-`- ℹ️ List any resources, contributors, inspiration, etc.`
+`- ℹ️ Thank you to Drs Kiyohito Iigaya and Pradyumna Sepulveda for their guidance.`
 
 [↑ Return](#Top)
 
